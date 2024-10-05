@@ -28,6 +28,7 @@ func (rt RequestType) String() string {
 	}
 
 	log.Fatal(errors.ErrUnsupported)
+
 	return "???"
 }
 

@@ -19,11 +19,14 @@ func New(db *sql.DB) *Database {
 
 func (d *Database) UserExistsInDB(userID int64) (bool, error) {
 	query := "SELECT EXISTS (SELECT 1 FROM users WHERE id = $1)"
+
 	var exists bool
+
 	err := d.db.QueryRow(query, userID).Scan(&exists)
 	if err != nil {
 		return false, err
 	}
+
 	return exists, nil
 }
 
@@ -41,7 +44,6 @@ func (d *Database) AddUserToDB(user telego.User, bot string) error {
 		return err
 	}
 
-	fmt.Println("\x1b[31mUser added to the database successfully.\x1b[0m")
 	return nil
 }
 
@@ -63,6 +65,7 @@ func (d *Database) UpdateUserInDB(user telego.User, bot string) error {
     `
 
 	_, err := d.db.Exec(query, user.ID, user.IsBot, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.CanJoinGroups, user.CanReadAllGroupMessages, user.SupportsInlineQueries, bot)
+
 	return err
 }
 
@@ -81,6 +84,7 @@ func (d *Database) AddUserMessageToDB(userID int64, firstName, lastName, usernam
 	}
 
 	log.Println("User message added to the database successfully.")
+
 	return nil
 }
 
@@ -93,7 +97,7 @@ func (d *Database) AddMessageToQueue(userID int64, message, bot, socialNetworkNa
 	matches := linkRegex.FindAllString(message, -1)
 
 	// Если найдены ссылки, добавляем уникальные в базу данных для конкретного пользователя
-	if len(matches) > 0 {
+	if len(matches) > 0 { //nolint:nestif
 		for _, link := range matches {
 			// Проверяем, есть ли такая ссылка уже в базе для данного пользователя
 			var count int
@@ -114,8 +118,8 @@ func (d *Database) AddMessageToQueue(userID int64, message, bot, socialNetworkNa
 			}
 		}
 	} else {
-		fmt.Println("No links found in the message.")
 		// Можно отправить пользователю сообщение о том, что не найдено ссылок
+		fmt.Println("No links found in the message.")
 	}
 
 	return nil
@@ -127,8 +131,10 @@ func (d *Database) GetMessagesCountByBot(botName string) (int, error) {
 		"SELECT COUNT(*) FROM message_queue WHERE bot = $1",
 		botName,
 	).Scan(&count)
+
 	if err != nil {
 		return 0, err
 	}
+
 	return count, nil
 }

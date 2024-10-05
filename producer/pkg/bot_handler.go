@@ -47,21 +47,25 @@ func (b *Bot) Handle(update telego.Update) {
 		b.updateUser(update)
 	}
 
-	b.db.AddUserMessageToDB(
+	if err = b.db.AddUserMessageToDB(
 		update.Message.From.ID,
 		update.Message.From.FirstName,
 		update.Message.From.LastName,
 		update.Message.From.Username,
 		update.Message.From.LanguageCode,
 		update.Message.Text,
-	)
+	); err != nil {
+		log.Printf("failed to add user message to db, user %d, bot %s\n", update.Message.From.ID, b.name())
+	}
 
 	if rtype == router.RequestTypeThanks {
 		b.thanks(update)
 		return
 	}
 
-	b.db.AddMessageToQueue(update.Message.From.ID, update.Message.Text, b.name(), rtype.String())
+	if err = b.db.AddMessageToQueue(update.Message.From.ID, update.Message.Text, b.name(), rtype.String()); err != nil {
+		log.Printf("failed to add msg to queue, user %d, bot %s\n", update.Message.From.ID, b.name())
+	}
 
 	count, err := b.db.GetMessagesCountByBot(b.name())
 
@@ -131,7 +135,9 @@ func (b *Bot) registerUser(update telego.Update) {
 }
 
 func (b *Bot) updateUser(update telego.Update) {
-	b.db.UpdateUserInDB(*update.Message.From, b.name())
+	if err := b.db.UpdateUserInDB(*update.Message.From, b.name()); err != nil {
+		log.Printf("failed to update a user in db, user %d, bot %s\n", update.Message.From.ID, b.name())
+	}
 }
 
 func (b *Bot) name() string {

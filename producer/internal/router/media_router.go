@@ -1,7 +1,9 @@
 package router
 
 import (
+	"net/url"
 	"regexp"
+	"strings"
 
 	pkgrouter "github.com/nikitades/carassius-bot/producer/pkg/router"
 )
@@ -34,14 +36,28 @@ func (mr *MediaRouter) Route(text string) (pkgrouter.RequestType, error) {
 }
 
 func (mr *MediaRouter) tryTwitter(text string) bool {
-	return false
+	return mr.try(text, "x.com")
 }
 
 func (mr *MediaRouter) tryInsta(text string) bool {
-	return false
+	return mr.try(text, "instagram.com")
 }
 
 func (mr *MediaRouter) tryReddit(text string) bool {
+	return mr.try(text, "reddit.com")
+}
+
+func (mr *MediaRouter) try(text, host string) bool {
+	url, err := url.Parse(text)
+
+	if err != nil {
+		return false
+	}
+
+	if strings.Contains(url.Host, host) {
+		return true
+	}
+
 	return false
 }
 
@@ -54,5 +70,4 @@ func (mr *MediaRouter) tryThanks(text string) bool {
 
 	// Если найдено соответствие, возвращаем true
 	return len(matches) > 0
-
 }

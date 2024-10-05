@@ -13,7 +13,7 @@ linters:
     - nolintlint # do not lint comments targeting a linter line //nolint:errcheck
     - varnamelen # enable short variable names like i, n, etc
     - nonamedreturns # allow named returns, no problem with that
-    - nlreturn # allow not to leve blank life after 'break' word
+    - nlreturn # allow not to leave blank line after 'break' word
     - gochecknoglobals # breaks all constant variables and pools
     - exhaustruct # allow return structures with uninitialized fields, required for requests pool for ex.
     - exhaustivestruct
@@ -31,10 +31,11 @@ linters:
     - mnd
     - gomnd
     - tagalign
+    - forbidigo
 
 run:
   tests: false
   skip-files:
-      - "mock.go"
+    - "mock.go"
   skip-dirs:
     - cmd
