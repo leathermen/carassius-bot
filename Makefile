@@ -26,6 +26,13 @@ lint:
 	@echo "Running golangci-lint on producer..."
 	(cd ./producer && golangci-lint cache clean && golangci-lint run)
 
+.PHONY: test
+test:
+	@echo "Testing consumer..."
+	(go test ./consumer/...)
+	@echo "Testing producer..."
+	(go test ./producer/...)
+
 # Clean up binaries
 .PHONY: clean
 clean:
