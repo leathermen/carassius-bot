@@ -1,0 +1,40 @@
+linters:
+  enable-all: true
+  disable:
+    - godox
+    - gosec
+    - gocognit
+    - depguard
+    - nakedret
+    - exhaustive
+    - wrapcheck # do not require to wrap each error in extra layer as it puts additional pressure on the garbage collector
+    - errorlint # not needed since nested errors are not being used
+    - goerr113
+    - nolintlint # do not lint comments targeting a linter line //nolint:errcheck
+    - varnamelen # enable short variable names like i, n, etc
+    - nonamedreturns # allow named returns, no problem with that
+    - nlreturn # allow not to leve blank life after 'break' word
+    - gochecknoglobals # breaks all constant variables and pools
+    - exhaustruct # allow return structures with uninitialized fields, required for requests pool for ex.
+    - exhaustivestruct
+    - wsl # spaces after variable assignment
+    - godot # each comment should end with dot
+    - gocritic
+    - gci
+    - gofumpt
+    - goimports
+    - funlen # checks length of the function. useful turn on from time to time to do small clean up
+    - cyclop
+    - lll
+    - tagliatelle
+    - maintidx
+    - mnd
+    - gomnd
+    - tagalign
+
+run:
+  tests: false
+  skip-files:
+      - "mock.go"
+  skip-dirs:
+    - cmd
