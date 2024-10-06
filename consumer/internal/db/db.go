@@ -65,7 +65,7 @@ func (d *Database) InsertMediaFile(mediaFile queue.MediaFile) error {
 		RETURNING id
 	`
 
-	err := d.db.QueryRow(query, mediaFile.SocialNetworkID, mediaFile.SocialNetworkName, mediaFile.FileID, mediaFile.FileType, mediaFile.Bot).Scan(&mediaFile.ID)
+	err := d.db.QueryRow(query, mediaFile.SocialNetworkID, mediaFile.SocialNetworkName, mediaFile.FileID, mediaFile.FileType, mediaFile.Bot).Scan(&mediaFile.ID) //nolint:execinquery
 	if err != nil {
 		log.Println("Error inserting media file:", err)
 		return err

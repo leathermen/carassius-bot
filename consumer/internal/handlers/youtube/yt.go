@@ -1,7 +1,6 @@
 package youtube
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -14,7 +13,11 @@ import (
 	"github.com/thanhpk/randstr"
 )
 
-const Code = "youtube"
+const (
+	Code = "youtube"
+
+	maxTGFileSize = 1024 * 1024 * 50
+)
 
 type Handler struct {
 	bot *telego.Bot
@@ -107,10 +110,26 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 		return
 	}
 
-	format := formats[0]
+	optimalFormat := formats[0]
+	for _, format := range formats {
+		if format.ContentLength <= maxTGFileSize && format.ContentLength > optimalFormat.ContentLength {
+			optimalFormat = format
+		}
+	}
+
+	if optimalFormat.ContentLength > maxTGFileSize {
+		log.Printf("file size exceeded: %s", msg)
+		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
+			ChatID: telego.ChatID{ID: userID},
+			Text:   "Media file is too large!",
+		}); err != nil {
+			log.Printf("failed to send too large file msg, user %d: %s", userID, err)
+		}
+
+		return
+	}
 
 	file, err := os.CreateTemp("", randstr.String(32)+".mp4")
-	fmt.Println(file)
 	if err != nil {
 		log.Printf("failed to create a tmp file: %v", err)
 		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
@@ -125,7 +144,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 	defer file.Close()
 
 	// Download the video content
-	stream, _, err := client.GetStream(video, &format)
+	stream, _, err := client.GetStream(video, &optimalFormat)
 	if err != nil {
 		log.Printf("failed to download video: %v", err)
 		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
@@ -158,8 +177,8 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 	params := telego.SendVideoParams{
 		ChatID: telegoutil.ID(userID),
 		Video:  inputfile,
-		Width:  format.Width,
-		Height: format.Height,
+		Width:  optimalFormat.Width,
+		Height: optimalFormat.Height,
 	}
 
 	tgMsg, err := h.bot.SendVideo(&params)
@@ -171,6 +190,8 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 		}); err != nil {
 			log.Printf("failed to send can't download msg, user %d: %s", userID, err)
 		}
+
+		return
 	}
 
 	mediaFileData := queue.MediaFile{
@@ -181,7 +202,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 		Bot:               botname.Name,
 	}
 
-	if err := h.db.InsertMediaFile(*&mediaFileData); err != nil {
+	if err := h.db.InsertMediaFile(mediaFileData); err != nil {
 		log.Printf("failed to save yt media post download: %s", err)
 	}
 }
