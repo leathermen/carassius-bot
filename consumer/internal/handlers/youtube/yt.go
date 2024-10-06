@@ -162,7 +162,8 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 		Height: format.Height,
 	}
 
-	if _, err := h.bot.SendVideo(&params); err != nil {
+	tgMsg, err := h.bot.SendVideo(&params)
+	if err != nil {
 		log.Printf("failed to send tg video: %s", err)
 		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
 			ChatID: telego.ChatID{ID: userID},
@@ -170,5 +171,17 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 		}); err != nil {
 			log.Printf("failed to send can't download msg, user %d: %s", userID, err)
 		}
+	}
+
+	mediaFileData := queue.MediaFile{
+		SocialNetworkID:   videoID,
+		SocialNetworkName: "youtube",
+		FileID:            tgMsg.Video.FileID,
+		FileType:          "video",
+		Bot:               botname.Name,
+	}
+
+	if err := h.db.InsertMediaFile(*&mediaFileData); err != nil {
+		log.Printf("failed to save yt media post download: %s", err)
 	}
 }

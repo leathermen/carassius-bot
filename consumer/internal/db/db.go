@@ -2,6 +2,8 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
 
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
 )
@@ -54,4 +56,21 @@ func (d *Database) GetMediaFileBySocialNetworkID(mediaID, platformName, botName 
 	}
 
 	return &mediaFile, nil
+}
+
+func (d *Database) InsertMediaFile(mediaFile queue.MediaFile) error {
+	query := `
+		INSERT INTO media_files (social_network_id, social_network_name, file_id, file_type, bot)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id
+	`
+
+	err := d.db.QueryRow(query, mediaFile.SocialNetworkID, mediaFile.SocialNetworkName, mediaFile.FileID, mediaFile.FileType, mediaFile.Bot).Scan(&mediaFile.ID)
+	if err != nil {
+		log.Println("Error inserting media file:", err)
+		return err
+	}
+
+	fmt.Printf("Inserted media file with ID %d\n", mediaFile.ID)
+	return nil
 }
