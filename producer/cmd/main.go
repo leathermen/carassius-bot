@@ -25,7 +25,7 @@ func main() {
 	db := db.New(dbconn)
 	mediaRouter := router.New()
 
-	bot := pkg.NewBot(config, mediaRouter, db)
+	bot := pkg.NewBot(config, mediaRouter, db, db)
 
 	var signalChan chan (os.Signal) = make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)

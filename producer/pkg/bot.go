@@ -8,25 +8,29 @@ import (
 
 	"github.com/mymmrac/telego"
 	"github.com/nikitades/carassius-bot/producer/pkg/db"
+	"github.com/nikitades/carassius-bot/producer/pkg/publisher"
 	"github.com/nikitades/carassius-bot/producer/pkg/router"
 )
 
 type Bot struct {
-	token  string
-	bot    *telego.Bot
-	router router.MediaRouter
-	db     db.Database
+	token     string
+	bot       *telego.Bot
+	router    router.MediaRouter
+	db        db.Database
+	publisher publisher.Publisher
 }
 
 func NewBot(
 	config *BotConfig,
 	mediaRouter router.MediaRouter,
 	db db.Database,
+	publisher publisher.Publisher,
 ) *Bot {
 	return &Bot{
-		token:  config.Token,
-		router: mediaRouter,
-		db:     db,
+		token:     config.Token,
+		router:    mediaRouter,
+		db:        db,
+		publisher: publisher,
 	}
 }
 

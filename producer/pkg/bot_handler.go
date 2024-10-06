@@ -64,11 +64,11 @@ func (b *Bot) Handle(update telego.Update) {
 		return
 	}
 
-	if err = b.db.AddMessageToQueue(update.Message.From.ID, update.Message.Text, b.name(), mtype.String()); err != nil {
+	if err = b.publisher.AddMessageToQueue(update.Message.From.ID, update.Message.Text, b.name(), mtype.String()); err != nil {
 		log.Printf("failed to add msg to queue, user %d, bot %s\n", update.Message.From.ID, b.name())
 	}
 
-	count, err := b.db.GetMessagesCountByBot(b.name())
+	count, err := b.publisher.GetMessagesCountByBot(b.name())
 
 	if err != nil {
 		log.Println("failed to get remaining messages count")

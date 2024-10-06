@@ -7,6 +7,4 @@ type Database interface {
 	AddUserToDB(user telego.User, bot string) error
 	UpdateUserInDB(user telego.User, bot string) error
 	AddUserMessageToDB(userID int64, firstName, lastName, username, languageCode, message string) error
-	AddMessageToQueue(userID int64, message, bot, socialNetworkName string) error
-	GetMessagesCountByBot(botName string) (int, error)
 }
