@@ -1,0 +1,24 @@
+FROM golang:1.23-alpine AS deps
+
+WORKDIR /app
+
+COPY go.mod go.sum /app/
+RUN go mod download
+
+FROM golang:1.23-alpine AS build
+
+WORKDIR /app
+COPY --from=deps /go/pkg /go/pkg
+
+COPY ./consumer/ /app/consumer/
+COPY ./shared/ /app/shared/
+
+COPY go.mod go.sum /app/
+RUN go build -o /bin/consumer /app/consumer/cmd
+
+FROM alpine:latest
+
+WORKDIR /app
+COPY --from=build /bin/consumer /app/consumer
+
+ENTRYPOINT [ "/bin/consumer" ]

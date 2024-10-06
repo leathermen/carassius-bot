@@ -25,6 +25,8 @@ lint:
 	(cd ./consumer && golangci-lint cache clean && golangci-lint run)
 	@echo "Running golangci-lint on producer..."
 	(cd ./producer && golangci-lint cache clean && golangci-lint run)
+	@echo "Running golangci-lint on shared..."
+	(cd ./shared && golangci-lint cache clean && golangci-lint run)
 
 .PHONY: test
 test:

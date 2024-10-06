@@ -7,8 +7,3 @@ const (
 	Insta   MediaType = iota
 	Reddit  MediaType = iota
 )
-
-type Task struct {
-	MediaType MediaType
-	Url       string
-}

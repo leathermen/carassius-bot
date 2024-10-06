@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	pkgrouter "github.com/nikitades/carassius-bot/producer/pkg/router"
+	"github.com/nikitades/carassius-bot/shared/request"
 )
 
 type MediaRouter struct {
@@ -15,21 +16,21 @@ func New() *MediaRouter {
 	return &MediaRouter{}
 }
 
-func (mr *MediaRouter) Route(text string) (pkgrouter.RequestType, error) {
+func (mr *MediaRouter) Route(text string) (request.Type, error) {
 	if mr.tryTwitter(text) {
-		return pkgrouter.RequestTypeTwitter, nil
+		return request.TypeTwitter, nil
 	}
 
 	if mr.tryInsta(text) {
-		return pkgrouter.RequestTypeInsta, nil
+		return request.TypeInsta, nil
 	}
 
 	if mr.tryReddit(text) {
-		return pkgrouter.RequestTypeReddit, nil
+		return request.TypeReddit, nil
 	}
 
 	if mr.tryThanks(text) {
-		return pkgrouter.RequestTypeThanks, nil
+		return request.TypeThanks, nil
 	}
 
 	return 0, pkgrouter.ErrNoMedia

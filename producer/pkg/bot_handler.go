@@ -10,6 +10,7 @@ import (
 
 	"github.com/mymmrac/telego"
 	"github.com/nikitades/carassius-bot/producer/pkg/router"
+	"github.com/nikitades/carassius-bot/shared/request"
 )
 
 func (b *Bot) Handle(update telego.Update) {
@@ -22,7 +23,7 @@ func (b *Bot) Handle(update telego.Update) {
 		return
 	}
 
-	rtype, err := b.router.Route(update.Message.Text)
+	mtype, err := b.router.Route(update.Message.Text)
 
 	if err != nil {
 		if errors.Is(err, router.ErrNoMedia) {
@@ -58,12 +59,12 @@ func (b *Bot) Handle(update telego.Update) {
 		log.Printf("failed to add user message to db, user %d, bot %s\n", update.Message.From.ID, b.name())
 	}
 
-	if rtype == router.RequestTypeThanks {
+	if mtype == request.TypeThanks {
 		b.thanks(update)
 		return
 	}
 
-	if err = b.db.AddMessageToQueue(update.Message.From.ID, update.Message.Text, b.name(), rtype.String()); err != nil {
+	if err = b.db.AddMessageToQueue(update.Message.From.ID, update.Message.Text, b.name(), mtype.String()); err != nil {
 		log.Printf("failed to add msg to queue, user %d, bot %s\n", update.Message.From.ID, b.name())
 	}
 

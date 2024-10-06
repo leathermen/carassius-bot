@@ -1,0 +1,24 @@
+FROM golang:1.23-alpine AS deps
+
+WORKDIR /app
+
+COPY go.mod go.sum /app/
+RUN go mod download
+
+FROM golang:1.23-alpine AS build
+
+WORKDIR /app
+COPY --from=deps /go/pkg /go/pkg
+
+COPY ./producer/ /app/producer/
+COPY ./shared/ /app/shared/
+
+COPY go.mod go.sum /app/
+RUN go build -o /bin/producer /app/producer/cmd
+
+FROM alpine:latest
+
+WORKDIR /app
+COPY --from=build /bin/producer /app/producer
+
+ENTRYPOINT [ "/bin/producer" ]
