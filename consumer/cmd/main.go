@@ -13,6 +13,8 @@ import (
 	"github.com/nikitades/carassius-bot/consumer/internal/handlers"
 	"github.com/nikitades/carassius-bot/consumer/pkg"
 	"github.com/nikitades/carassius-bot/shared/bothelper"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -26,12 +28,22 @@ func main() {
 
 	db := db.New(dbconn)
 
-	bot, err := telego.NewBot(botToken, telego.WithDefaultLogger(false, true))
+	debug := os.Getenv("DEBUG") == "1"
+
+	var loggerOption telego.BotOption
+
+	if debug {
+		loggerOption = telego.WithDefaultDebugLogger()
+	} else {
+		loggerOption = telego.WithDefaultLogger(false, true)
+	}
+
+	bot, err := telego.NewBot(botToken, loggerOption)
 	if err != nil {
 		log.Fatalf("failed to create tg bot: %s", err)
 	}
 
-	consumer := pkg.NewConsumer(bothelper.Botname(bot), db, handlers.NewSuper(bot, db))
+	consumer := pkg.NewConsumer(bothelper.Botname(bot), db, handlers.NewSuper(bot, db, db))
 
 	var signalChan chan (os.Signal) = make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)

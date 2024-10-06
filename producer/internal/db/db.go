@@ -127,7 +127,7 @@ func (d *Database) AddMessageToQueue(userID int64, message, bot, socialNetworkNa
 func (d *Database) GetMessagesCountByBot(botName string) (int, error) {
 	var count int
 	err := d.db.QueryRow(
-		"SELECT COUNT(*) FROM message_queue WHERE bot = $1",
+		"SELECT COUNT(*)-1 FROM message_queue WHERE bot = $1",
 		botName,
 	).Scan(&count)
 

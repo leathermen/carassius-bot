@@ -26,7 +26,7 @@ func NewConsumer(botname string, queue queue.Queue, handler handler.Handler) *Co
 }
 
 func (c *Consumer) Start(ctx context.Context) {
-	limiter := rate.NewLimiter(rate.Every(time.Second * 5), 1)
+	limiter := rate.NewLimiter(rate.Every(time.Second*5), 1)
 	for {
 		select {
 		case <-ctx.Done():

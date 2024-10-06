@@ -7,19 +7,19 @@ import (
 
 const Code = "insta"
 
-type handler struct {
+type Handler struct {
 	bot *telego.Bot
 	q   queue.Queue
 }
 
-func New(bot *telego.Bot, q queue.Queue) *handler {
-	return &handler{bot, q}
+func New(bot *telego.Bot, q queue.Queue) *Handler {
+	return &Handler{bot, q}
 }
 
-func (h *handler) Handle(userID int64, msg string, msgID int) {
+func (h *Handler) Handle(_ int64, _ string, _ int) {
 
 }
 
-func (h *handler) Name() string {
+func (h *Handler) Name() string {
 	return Code
 }

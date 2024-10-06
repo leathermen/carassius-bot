@@ -2,6 +2,7 @@ package router
 
 import "regexp"
 
+//nolint:dupword
 /**
 
 T. Hanks
