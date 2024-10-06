@@ -2,10 +2,9 @@ module github.com/nikitades/carassius-bot
 
 go 1.23.0
 
-require (
-	github.com/mymmrac/telego v0.31.3
-	github.com/thanhpk/randstr v1.0.6
-)
+require github.com/mymmrac/telego v0.31.3
+
+require github.com/lib/pq v1.10.9
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
@@ -24,4 +23,5 @@ require (
 	github.com/valyala/fastjson v1.6.4 // indirect
 	golang.org/x/arch v0.6.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/time v0.7.0
 )

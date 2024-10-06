@@ -2,8 +2,7 @@ package pkg
 
 import (
 	"context"
-	"fmt"
-	"os"
+	"log"
 	"sync"
 
 	"github.com/mymmrac/telego"
@@ -12,47 +11,39 @@ import (
 	"github.com/nikitades/carassius-bot/producer/pkg/router"
 )
 
-type Bot struct {
-	token     string
+type Producer struct {
 	bot       *telego.Bot
 	router    router.MediaRouter
 	db        db.Database
 	publisher publisher.Publisher
 }
 
-func NewBot(
-	config *BotConfig,
+func NewProducer(
+	bot *telego.Bot,
 	mediaRouter router.MediaRouter,
 	db db.Database,
 	publisher publisher.Publisher,
-) *Bot {
-	return &Bot{
-		token:     config.Token,
+) *Producer {
+	return &Producer{
+		bot:       bot,
 		router:    mediaRouter,
 		db:        db,
 		publisher: publisher,
 	}
 }
 
-func (b *Bot) Start(ctx context.Context) {
-	var err error
-	b.bot, err = telego.NewBot(b.token, telego.WithDefaultDebugLogger())
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
+func (b *Producer) Start(ctx context.Context) {
 	updates, _ := b.bot.UpdatesViaLongPolling(nil)
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
 	go func() {
+		log.Println("Producer started...")
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("Bot's cancelled! Exiting...")
+				log.Println("Bot's cancelled! Exiting...")
 				wg.Done()
 				return
 			case update := <-updates:

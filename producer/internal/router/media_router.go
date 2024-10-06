@@ -2,15 +2,13 @@ package router
 
 import (
 	"net/url"
-	"regexp"
 	"strings"
 
 	pkgrouter "github.com/nikitades/carassius-bot/producer/pkg/router"
 	"github.com/nikitades/carassius-bot/shared/request"
 )
 
-type MediaRouter struct {
-}
+type MediaRouter struct{}
 
 func New() *MediaRouter {
 	return &MediaRouter{}
@@ -29,6 +27,18 @@ func (mr *MediaRouter) Route(text string) (request.Type, error) {
 		return request.TypeReddit, nil
 	}
 
+	if mr.tryTiktok(text) {
+		return request.TypeTiktok, nil
+	}
+
+	if mr.tryPinterest(text) {
+		return request.TypePinterest, nil
+	}
+
+	if mr.tryYoutube(text) {
+		return request.TypeYoutube, nil
+	}
+
 	if mr.tryThanks(text) {
 		return request.TypeThanks, nil
 	}
@@ -37,7 +47,7 @@ func (mr *MediaRouter) Route(text string) (request.Type, error) {
 }
 
 func (mr *MediaRouter) tryTwitter(text string) bool {
-	return mr.try(text, "x.com")
+	return mr.try(text, "x.com") || mr.try(text, "twitter.com")
 }
 
 func (mr *MediaRouter) tryInsta(text string) bool {
@@ -46,6 +56,18 @@ func (mr *MediaRouter) tryInsta(text string) bool {
 
 func (mr *MediaRouter) tryReddit(text string) bool {
 	return mr.try(text, "reddit.com")
+}
+
+func (mr *MediaRouter) tryPinterest(text string) bool {
+	return mr.try(text, "pinterest.com") || mr.try(text, "pin.it")
+}
+
+func (mr *MediaRouter) tryYoutube(text string) bool {
+	return mr.try(text, "youtube.com") || mr.try(text, "youtu.be")
+}
+
+func (mr *MediaRouter) tryTiktok(text string) bool {
+	return mr.try(text, "tiktok.com")
 }
 
 func (mr *MediaRouter) try(text, host string) bool {
@@ -60,15 +82,4 @@ func (mr *MediaRouter) try(text, host string) bool {
 	}
 
 	return false
-}
-
-func (mr *MediaRouter) tryThanks(text string) bool {
-	// Создаем регулярное выражение для поиска ключевых фраз
-	regex := regexp.MustCompile(`(?i)\b(thanks|thank you|thx|tq|thanks a lot|thanks a bunch|❤)\b`)
-
-	// Используем FindStringSubmatch для поиска соответствий
-	matches := regex.FindStringSubmatch(text)
-
-	// Если найдено соответствие, возвращаем true
-	return len(matches) > 0
 }

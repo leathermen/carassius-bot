@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: tg
+      POSTGRES_PASSWORD: tg
+      POSTGRES_DB: tg
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./docker/psql/data:/var/lib/postgresql/data
+      - ./docker/psql/schema.sql:/docker-entrypoint-initdb.d/init.sql

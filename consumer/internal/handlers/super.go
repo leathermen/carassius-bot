@@ -1,0 +1,50 @@
+package handlers
+
+import (
+	"github.com/mymmrac/telego"
+	"github.com/nikitades/carassius-bot/consumer/internal/handlers/insta"
+	"github.com/nikitades/carassius-bot/consumer/internal/handlers/youtube"
+	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
+)
+
+type SuperHandler struct {
+	handlers map[string]handler
+}
+
+func NewSuper(bot *telego.Bot, q queue.Queue) *SuperHandler {
+	handlers := make(map[string]handler)
+
+	instahandler := insta.New(bot, q)
+	handlers[instahandler.Name()] = instahandler
+
+	ythandler := youtube.New(bot, q)
+	handlers[ythandler.Name()] = ythandler
+
+	return &SuperHandler{
+		handlers,
+	}
+}
+
+func (sh *SuperHandler) HandleTiktok(userID int64, msg string, msgID int) {
+	sh.handlers["tiktok"].Handle(userID, msg, msgID)
+}
+
+func (sh *SuperHandler) HandleInsta(userID int64, msg string, msgID int) {
+	sh.handlers["insta"].Handle(userID, msg, msgID)
+}
+
+func (sh *SuperHandler) HandleReddit(userID int64, msg string, msgID int) {
+	sh.handlers["reddit"].Handle(userID, msg, msgID)
+}
+
+func (sh *SuperHandler) HandleTwitter(userID int64, msg string, msgID int) {
+	sh.handlers["twitter"].Handle(userID, msg, msgID)
+}
+
+func (sh *SuperHandler) HandleYoutube(userID int64, msg string, msgID int) {
+	sh.handlers["youtube"].Handle(userID, msg, msgID)
+}
+
+func (sh *SuperHandler) HandlePinterest(userID int64, msg string, msgID int) {
+	sh.handlers["pinterest"].Handle(userID, msg, msgID)
+}

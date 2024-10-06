@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"regexp"
 
@@ -119,7 +118,7 @@ func (d *Database) AddMessageToQueue(userID int64, message, bot, socialNetworkNa
 		}
 	} else {
 		// Можно отправить пользователю сообщение о том, что не найдено ссылок
-		fmt.Println("No links found in the message.")
+		log.Println("No links found in the message.")
 	}
 
 	return nil
