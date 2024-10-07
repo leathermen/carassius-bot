@@ -51,7 +51,7 @@ func (mr *MediaRouter) tryTwitter(text string) bool {
 }
 
 func (mr *MediaRouter) tryInsta(text string) bool {
-	return mr.try(text, "instagram.com")
+	return mr.try(text, "instagram.com") || mr.try(text, "instagr.am")
 }
 
 func (mr *MediaRouter) tryReddit(text string) bool {

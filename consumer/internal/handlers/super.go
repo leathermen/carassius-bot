@@ -9,13 +9,13 @@ import (
 )
 
 type SuperHandler struct {
-	handlers map[string]handler
+	handlers map[string]Handler
 }
 
 func NewSuper(bot *telego.Bot, q queue.Queue, db db.Database) *SuperHandler {
-	handlers := make(map[string]handler)
+	handlers := make(map[string]Handler)
 
-	instahandler := insta.New(bot, q)
+	instahandler := insta.New(bot, q, db)
 	handlers[instahandler.Name()] = instahandler
 
 	ythandler := youtube.New(bot, q, db)

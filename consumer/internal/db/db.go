@@ -74,3 +74,14 @@ func (d *Database) InsertMediaFile(mediaFile queue.MediaFile) error {
 	fmt.Printf("Inserted media file with ID %d\n", mediaFile.ID)
 	return nil
 }
+
+func (d *Database) GetUserCookie() (string, bool) {
+	var cookieValue string
+
+	err := d.db.QueryRow("SELECT cookie_value FROM cookie WHERE user_id = $1", 1).Scan(&cookieValue)
+	if err != nil {
+		return "", false
+	}
+
+	return cookieValue, true
+}
