@@ -1,4 +1,4 @@
-package reel
+package insta
 
 import (
 	"bytes"
@@ -47,12 +47,13 @@ type Details struct {
 				Height int `json:"height"`
 				Width  int `json:"width"`
 			} `json:"dimensions"`
-			VideoURL string `json:"video_url"`
+			VideoURL  string `json:"video_url"`
+			Thumbnail string `json:"thumbnail_src"`
 		} `json:"xdt_shortcode_media"`
 	} `json:"data"`
 }
 
-func newQuery(reelID string) *Query {
+func newGQQuery(reelID string) *Query {
 	return &Query{
 		A:                    "1",
 		Ccg:                  "UNKNOWN",
@@ -81,8 +82,8 @@ func newQuery(reelID string) *Query {
 	}
 }
 
-func GetURL(reelID, csrf string) (*Details, error) {
-	query := newQuery(reelID)
+func getMediaDetails(reelID, csrf string) (*Details, error) {
+	query := newGQQuery(reelID)
 
 	jsonData, err := json.Marshal(query)
 	if err != nil {

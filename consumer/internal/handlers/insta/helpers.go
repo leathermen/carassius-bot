@@ -13,12 +13,11 @@ func getPostType(rawURL string) (PostType, bool) {
 		return 0, false
 	}
 	patterns := map[PostType]*regexp.Regexp{
-		Post:  regexp.MustCompile(`^.*/p/[a-zA-Z0-9_-]+/?$`),
-		Story: regexp.MustCompile(`^.*/stories/[a-zA-Z0-9._]{1,30}/[0-9]+/?$`),
-		Reel:  regexp.MustCompile(`.*/reel/[a-zA-Z0-9_-]+/?$`),
+		Post: regexp.MustCompile(`^.*/p/[a-zA-Z0-9_-]+/?$`),
+		// Story: regexp.MustCompile(`^.*/stories/[a-zA-Z0-9._]{1,30}/[0-9]+/?$`),
+		Reel: regexp.MustCompile(`.*/reel/[a-zA-Z0-9_-]+/?$`),
 	}
 
-	// Check against each pattern
 	for urlType, pattern := range patterns {
 		if pattern.MatchString(url.Path) {
 			return urlType, true

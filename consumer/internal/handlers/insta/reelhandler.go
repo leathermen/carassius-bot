@@ -6,7 +6,6 @@ import (
 
 	"github.com/mymmrac/telego"
 	"github.com/mymmrac/telego/telegoutil"
-	"github.com/nikitades/carassius-bot/consumer/internal/handlers/insta/reel"
 	"github.com/nikitades/carassius-bot/consumer/internal/helpers"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
@@ -56,7 +55,7 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 		return
 	}
 
-	reelDetails, err := reel.GetURL(reelID, rh.csrfprovider.getCSRF())
+	reelDetails, err := getMediaDetails(reelID, rh.csrfprovider.getCSRF())
 	if err != nil {
 		log.Printf("failed to get reels details, reel ID %s, user ID %d", reelID, userID)
 		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{

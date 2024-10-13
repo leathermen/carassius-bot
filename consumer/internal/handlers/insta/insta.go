@@ -25,7 +25,9 @@ func New(bot *telego.Bot, q queue.Queue, db db.Database) *Handler {
 	csrfprovider := newCsrfProvider()
 
 	handlers := map[PostType]subhandler{}
+
 	handlers[Reel] = newReelHandler(bot, db, csrfprovider)
+	handlers[Post] = newPostHandler(bot, db, csrfprovider)
 
 	return &Handler{bot, q, handlers}
 }
@@ -47,7 +49,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 		log.Printf("unsupported insta media provided")
 		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
 			ChatID: telegoutil.ID(userID),
-			Text:   "This type of media is not supported.",
+			Text:   "This type of media is not supported. Supported: reels, posts.",
 		}); err != nil {
 			log.Printf("failed to send unsupported message")
 		}
