@@ -59,6 +59,9 @@ func (c *Consumer) Start(ctx context.Context) {
 				c.handler.HandleReddit(msg.UserID, msg.Message, msg.ID)
 			default:
 				log.Printf("Unknown message type: %s", msg.SocialNetworkName)
+				if err := c.queue.DeleteMessageFromQueue(msg.ID); err != nil {
+					log.Printf("failed to remove msg from queue: %d", msg.ID)
+				}
 			}
 		}
 	}

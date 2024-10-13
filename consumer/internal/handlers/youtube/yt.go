@@ -10,6 +10,7 @@ import (
 	"github.com/mymmrac/telego/telegoutil"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
+	"github.com/nikitades/carassius-bot/shared/request"
 	"github.com/thanhpk/randstr"
 )
 
@@ -62,7 +63,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 	}
 
 	botname, _ := h.bot.GetMyName(nil)
-	mediaFile, err := h.db.GetMediaFileBySocialNetworkID(videoID, "youtube", botname.Name)
+	mediaFile, err := h.db.GetMediaFileBySocialNetworkID(videoID, request.TypeYoutube.String(), botname.Name)
 
 	if err != nil {
 		log.Printf("failed to lookup media files DB: %s", err)
@@ -196,7 +197,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 
 	mediaFileData := queue.MediaFile{
 		SocialNetworkID:   videoID,
-		SocialNetworkName: "youtube",
+		SocialNetworkName: Code,
 		FileID:            tgMsg.Video.FileID,
 		FileType:          "video",
 		Bot:               botname.Name,
