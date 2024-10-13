@@ -22,8 +22,11 @@ type Handler struct {
 }
 
 func New(bot *telego.Bot, q queue.Queue, db db.Database) *Handler {
+	csrfprovider := newCsrfProvider()
+
 	handlers := map[PostType]subhandler{}
-	handlers[Reel] = newReelHandler(bot, db)
+	handlers[Reel] = newReelHandler(bot, db, csrfprovider)
+
 	return &Handler{bot, q, handlers}
 }
 

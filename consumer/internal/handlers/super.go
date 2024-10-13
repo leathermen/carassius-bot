@@ -6,6 +6,7 @@ import (
 	"github.com/nikitades/carassius-bot/consumer/internal/handlers/youtube"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
+	"github.com/nikitades/carassius-bot/shared/request"
 )
 
 type SuperHandler struct {
@@ -27,25 +28,25 @@ func NewSuper(bot *telego.Bot, q queue.Queue, db db.Database) *SuperHandler {
 }
 
 func (sh *SuperHandler) HandleTiktok(userID int64, msg string, msgID int) {
-	sh.handlers["tiktok"].Handle(userID, msg, msgID)
+	sh.handlers[request.TypeTiktok.String()].Handle(userID, msg, msgID)
 }
 
 func (sh *SuperHandler) HandleInsta(userID int64, msg string, msgID int) {
-	sh.handlers["insta"].Handle(userID, msg, msgID)
+	sh.handlers[request.TypeInsta.String()].Handle(userID, msg, msgID)
 }
 
 func (sh *SuperHandler) HandleReddit(userID int64, msg string, msgID int) {
-	sh.handlers["reddit"].Handle(userID, msg, msgID)
+	sh.handlers[request.TypeReddit.String()].Handle(userID, msg, msgID)
 }
 
 func (sh *SuperHandler) HandleTwitter(userID int64, msg string, msgID int) {
-	sh.handlers["twitter"].Handle(userID, msg, msgID)
+	sh.handlers[request.TypeTwitter.String()].Handle(userID, msg, msgID)
 }
 
 func (sh *SuperHandler) HandleYoutube(userID int64, msg string, msgID int) {
-	sh.handlers["youtube"].Handle(userID, msg, msgID)
+	sh.handlers[request.TypeYoutube.String()].Handle(userID, msg, msgID)
 }
 
 func (sh *SuperHandler) HandlePinterest(userID int64, msg string, msgID int) {
-	sh.handlers["pinterest"].Handle(userID, msg, msgID)
+	sh.handlers[request.TypePinterest.String()].Handle(userID, msg, msgID)
 }

@@ -82,8 +82,6 @@ func (d *Database) AddUserMessageToDB(userID int64, firstName, lastName, usernam
 		return err
 	}
 
-	log.Println("User message added to the database successfully.")
-
 	return nil
 }
 

@@ -197,7 +197,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 
 	mediaFileData := queue.MediaFile{
 		SocialNetworkID:   videoID,
-		SocialNetworkName: "youtube",
+		SocialNetworkName: Code,
 		FileID:            tgMsg.Video.FileID,
 		FileType:          "video",
 		Bot:               botname.Name,

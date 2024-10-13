@@ -23,7 +23,7 @@ func (rt Type) String() string {
 	case TypeTwitter:
 		return "twitter"
 	case TypeInsta:
-		return "instagram"
+		return "insta"
 	case TypeReddit:
 		return "reddit"
 	case TypeTiktok:
