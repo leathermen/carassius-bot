@@ -74,7 +74,7 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 
 	file, err := helpers.DownloadFile(reelDetails.Data.Media.VideoURL)
 	if err != nil {
-		log.Printf("failed to download reels video")
+		log.Printf("failed to download reels video: %s", err)
 		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
 			ChatID: telegoutil.ID(userID),
 			Text:   "Failed to download reel",
