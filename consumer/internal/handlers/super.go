@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/mymmrac/telego"
 	"github.com/nikitades/carassius-bot/consumer/internal/handlers/insta"
+	"github.com/nikitades/carassius-bot/consumer/internal/handlers/twitter"
 	"github.com/nikitades/carassius-bot/consumer/internal/handlers/youtube"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
@@ -13,14 +14,17 @@ type SuperHandler struct {
 	handlers map[string]Handler
 }
 
-func NewSuper(bot *telego.Bot, q queue.Queue, db db.Database) *SuperHandler {
+func NewSuper(bot *telego.Bot, q queue.Queue, db db.Database, channels []int64) *SuperHandler {
 	handlers := make(map[string]Handler)
 
-	instahandler := insta.New(bot, q, db)
+	instahandler := insta.New(bot, q, db, channels)
 	handlers[instahandler.Name()] = instahandler
 
-	ythandler := youtube.New(bot, q, db)
+	ythandler := youtube.New(bot, q, db, channels)
 	handlers[ythandler.Name()] = ythandler
+
+	twhandler := twitter.New(bot, q, db, channels)
+	handlers[twhandler.Name()] = twhandler
 
 	return &SuperHandler{
 		handlers,

@@ -9,7 +9,7 @@ import (
 	"github.com/thanhpk/randstr"
 )
 
-func DownloadFile(url string) (*os.File, error) {
+func DownloadFile(url string, ext ...string) (*os.File, error) {
 	resp, err := http.Get(url) //nolint:noctx
 
 	if err != nil {
@@ -22,7 +22,14 @@ func DownloadFile(url string) (*os.File, error) {
 		return nil, fmt.Errorf("bad status at file downloading: %d", resp.StatusCode)
 	}
 
-	file, err := os.CreateTemp("", randstr.String(24))
+	filename := os.TempDir() + randstr.String(24)
+
+	if len(ext) > 0 {
+		filename += "."
+		filename += ext[0]
+	}
+
+	file, err := os.Create(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create tmp file: %w", err)
 	}

@@ -21,13 +21,13 @@ type Handler struct {
 	handlers map[PostType]subhandler
 }
 
-func New(bot *telego.Bot, q queue.Queue, db db.Database) *Handler {
+func New(bot *telego.Bot, q queue.Queue, db db.Database, channels []int64) *Handler {
 	csrfprovider := newCsrfProvider()
 
 	handlers := map[PostType]subhandler{}
 
-	handlers[Reel] = newReelHandler(bot, db, csrfprovider)
-	handlers[Post] = newPostHandler(bot, db, csrfprovider)
+	handlers[Reel] = newReelHandler(bot, db, csrfprovider, channels)
+	handlers[Post] = newPostHandler(bot, db, csrfprovider, channels)
 
 	return &Handler{bot, q, handlers}
 }

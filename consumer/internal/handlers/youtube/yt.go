@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/kkdai/youtube/v2"
 	"github.com/mymmrac/telego"
@@ -24,10 +25,12 @@ type Handler struct {
 	bot *telego.Bot
 	q   queue.Queue
 	db  db.Database
+
+	channels []int64
 }
 
-func New(bot *telego.Bot, q queue.Queue, db db.Database) *Handler {
-	return &Handler{bot, q, db}
+func New(bot *telego.Bot, q queue.Queue, db db.Database, channels []int64) *Handler {
+	return &Handler{bot, q, db, channels}
 }
 
 func (h *Handler) Name() string {
@@ -111,14 +114,15 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 		return
 	}
 
-	optimalFormat := formats[0]
+	var optimalFormat youtube.Format
+
 	for _, format := range formats {
-		if format.ContentLength <= maxTGFileSize && format.ContentLength > optimalFormat.ContentLength {
+		if strings.Contains(format.MimeType, "video/mp4") && format.ContentLength <= maxTGFileSize && format.ContentLength > optimalFormat.ContentLength {
 			optimalFormat = format
 		}
 	}
 
-	if optimalFormat.ContentLength > maxTGFileSize {
+	if optimalFormat.ContentLength > maxTGFileSize || optimalFormat.ContentLength == 0 {
 		log.Printf("file size exceeded: %s", msg)
 		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
 			ChatID: telego.ChatID{ID: userID},
@@ -184,7 +188,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 
 	tgMsg, err := h.bot.SendVideo(&params)
 	if err != nil {
-		log.Printf("failed to send tg video: %s", err)
+		log.Printf("failed to send tg video to user: %s", err)
 		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
 			ChatID: telego.ChatID{ID: userID},
 			Text:   "Can't download this media!",
@@ -193,6 +197,17 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 		}
 
 		return
+	}
+
+	for _, c := range h.channels {
+		if _, err = h.bot.SendVideo(&telego.SendVideoParams{
+			ChatID: telegoutil.ID(c),
+			Video:  telegoutil.FileFromID(tgMsg.Video.FileID),
+			Width:  optimalFormat.Width,
+			Height: optimalFormat.Height,
+		}); err != nil {
+			log.Printf("failed to send tg video to channel %d: %s", c, err)
+		}
 	}
 
 	mediaFileData := queue.MediaFile{

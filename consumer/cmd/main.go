@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/mymmrac/telego"
@@ -43,7 +45,20 @@ func main() {
 		log.Fatalf("failed to create tg bot: %s", err)
 	}
 
-	consumer := pkg.NewConsumer(bothelper.Botname(bot), db, handlers.NewSuper(bot, db, db))
+	channelsStr := os.Getenv("CHANNELS")
+
+	var channels []int64
+
+	for _, str := range strings.Split(channelsStr, ",") {
+		channel, err := strconv.ParseInt(str, 10, 64)
+		if err != nil {
+			log.Fatalf("failed to start: getting tg channel id: %s", err)
+		}
+
+		channels = append(channels, channel)
+	}
+
+	consumer := pkg.NewConsumer(bothelper.Botname(bot), db, handlers.NewSuper(bot, db, db, channels))
 
 	var signalChan chan (os.Signal) = make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)

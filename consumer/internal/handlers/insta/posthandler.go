@@ -25,10 +25,12 @@ type posthandler struct {
 	bot          *telego.Bot
 	db           db.Database
 	csrfprovider *csrfprovider
+
+	channels []int64
 }
 
-func newPostHandler(bot *telego.Bot, db db.Database, csrfprovider *csrfprovider) *posthandler {
-	return &posthandler{bot, db, csrfprovider}
+func newPostHandler(bot *telego.Bot, db db.Database, csrfprovider *csrfprovider, channels []int64) *posthandler {
+	return &posthandler{bot, db, csrfprovider, channels}
 }
 
 func (ph *posthandler) Handle(userID int64, msg string, _ int) {
@@ -42,6 +44,8 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 		}); err != nil {
 			log.Printf("failed to send malformed post link message, user %d", userID)
 		}
+
+		return
 	}
 
 	botname, _ := ph.bot.GetMyName(nil)
@@ -73,6 +77,8 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 		}); err != nil {
 			log.Printf("failed to send failed to download photo, post ID %s, user ID %d", postID, userID)
 		}
+
+		return
 	}
 
 	file, err := helpers.DownloadFile(postDetails.Data.Media.Thumbnail)
@@ -84,6 +90,8 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 		}); err != nil {
 			log.Printf("failed to send failed to download photo, post ID %s, userID %d", postID, userID)
 		}
+
+		return
 	}
 
 	inputfile := telego.InputFile{File: file}
@@ -95,7 +103,7 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 
 	tgMsg, err := ph.bot.SendPhoto(&params)
 	if err != nil {
-		log.Printf("failed to send tg photo: %s", err)
+		log.Printf("failed to send tg photo to user: %s", err)
 		if _, err := ph.bot.SendMessage(&telego.SendMessageParams{
 			ChatID: telego.ChatID{ID: userID},
 			Text:   "Can't download this media!",
@@ -116,6 +124,15 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 	if fileID == "nothing" {
 		log.Printf("failed to find TG file id")
 		return
+	}
+
+	for _, c := range ph.channels {
+		if _, err = ph.bot.SendPhoto(&telego.SendPhotoParams{
+			ChatID: telegoutil.ID(c),
+			Photo:  telegoutil.FileFromID(fileID),
+		}); err != nil {
+			log.Printf("failed to send tg photo to a channel %d: %s", c, err)
+		}
 	}
 
 	mediaFileData := queue.MediaFile{

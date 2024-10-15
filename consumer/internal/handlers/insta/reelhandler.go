@@ -16,10 +16,12 @@ type reelhandler struct {
 	bot          *telego.Bot
 	db           db.Database
 	csrfprovider *csrfprovider
+
+	channels []int64
 }
 
-func newReelHandler(bot *telego.Bot, db db.Database, csrfprovider *csrfprovider) *reelhandler {
-	return &reelhandler{bot, db, csrfprovider}
+func newReelHandler(bot *telego.Bot, db db.Database, csrfprovider *csrfprovider, channels []int64) *reelhandler {
+	return &reelhandler{bot, db, csrfprovider, channels}
 }
 
 func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
@@ -33,6 +35,8 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 		}); err != nil {
 			log.Printf("failed to send malformed reel link message, user %d", userID)
 		}
+
+		return
 	}
 
 	botname, _ := rh.bot.GetMyName(nil)
@@ -64,6 +68,8 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 		}); err != nil {
 			log.Printf("failed to send failed to download video, reel ID %s, user ID %d", reelID, userID)
 		}
+
+		return
 	}
 
 	file, err := helpers.DownloadFile(reelDetails.Data.Media.VideoURL)
@@ -75,6 +81,8 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 		}); err != nil {
 			log.Printf("failed to send failed to download video, reel ID %s, userID %d", reelID, userID)
 		}
+
+		return
 	}
 
 	inputfile := telego.InputFile{File: file}
@@ -88,7 +96,7 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 
 	tgMsg, err := rh.bot.SendVideo(&params)
 	if err != nil {
-		log.Printf("failed to send tg video: %s", err)
+		log.Printf("failed to send tg video to user: %s", err)
 		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
 			ChatID: telego.ChatID{ID: userID},
 			Text:   "Can't download this media!",
@@ -97,6 +105,17 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 		}
 
 		return
+	}
+
+	for _, c := range rh.channels {
+		if _, err = rh.bot.SendVideo(&telego.SendVideoParams{
+			ChatID: telegoutil.ID(c),
+			Video:  telegoutil.FileFromID(tgMsg.Video.FileID),
+			Width:  reelDetails.Data.Media.Dimensions.Width,
+			Height: reelDetails.Data.Media.Dimensions.Height,
+		}); err != nil {
+			log.Printf("failed to send tg video to a channel %d: %s", c, err)
+		}
 	}
 
 	mediaFileData := queue.MediaFile{
