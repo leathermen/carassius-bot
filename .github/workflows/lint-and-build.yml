@@ -122,13 +122,13 @@ jobs:
       - uses: mikefarah/yq@master
         with:
           cmd: |
-            yq -i '.spec.template.spec.containers[0].image = "${{ env.DIGEST_CONSUMER }}"' 'k8s/charts/deployment_consumer.yml'
-            yq -i '.spec.template.spec.containers[0].image = "${{ env.DIGEST_PRODUCER }}"' 'k8s/charts/deployment_producer.yml'
-            yq -i '.data.token = "${{ secrets.BOT_TOKEN }}"' 'k8s/charts/secret_consumer.yml'
-            yq -i '.data.token = "${{ secrets.BOT_TOKEN }}"' 'k8s/charts/secret_producer.yml'
-            yq -i '.data.database-url = "${{ secrets.DATABASE_URL }}"' 'k8s/charts/secret_consumer.yml'
-            yq -i '.data.database-url = "${{ secrets.DATABASE_URL }}"' 'k8s/charts/secret_producer.yml'
-            yq -i '.data.channels = "${{ secrets.CHANNELS }}"' 'k8s/charts/secret_consumer.yml'
+            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-consumer@${{ env.DIGEST_CONSUMER }}"' 'k8s/charts/deployment_consumer.yml'
+            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-producer@${{ env.DIGEST_PRODUCER }}"' 'k8s/charts/deployment_producer.yml'
+            yq -i '.stringData.token = "${{ secrets.BOT_TOKEN }}"' 'k8s/charts/secret_consumer.yml'
+            yq -i '.stringData.token = "${{ secrets.BOT_TOKEN }}"' 'k8s/charts/secret_producer.yml'
+            yq -i '.stringData.database-url = "${{ secrets.DATABASE_URL }}"' 'k8s/charts/secret_consumer.yml'
+            yq -i '.stringData.database-url = "${{ secrets.DATABASE_URL }}"' 'k8s/charts/secret_producer.yml'
+            yq -i '.stringData.channels = "${{ secrets.CHANNELS }}"' 'k8s/charts/secret_consumer.yml'
             yq -i '.spec.template.spec.containers[0].env[] | select(.name == "POSTGRES_USER") | .value = "${{ secrets.DATABASE_USER }}"' 'k8s/charts/deployment_postgres.yml'
             yq -i '.spec.template.spec.containers[0].env[] | select(.name == "POSTGRES_PASSWORD") | .value = "${{ secrets.DATABASE_PWD }}"' 'k8s/charts/deployment_postgres.yml'
             yq -i '.spec.template.spec.containers[0].env[] | select(.name == "POSTGRES_DB") | .value = "${{ secrets.DATABASE_NAME }}"' 'k8s/charts/deployment_postgres.yml'
