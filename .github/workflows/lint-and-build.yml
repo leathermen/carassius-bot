@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, lint]
     outputs:
-      digest: ${{ steps.digest.outputs.digest }}
+      image: ${{ steps.digest.outputs.digest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -75,17 +75,18 @@ jobs:
         with:
           username: nikitades
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - id: docker-image
+        run: |
+          DOCKER_TAG="nikitades/carassius-producer:${GITHUB_SHA::48}"
+          echo "docker_image=${DOCKER_TAG}" >> $GITHUB_ENV
+          echo "docker_image=${DOCKER_TAG}" >> $GITHUB_OUTPUT
       - name: Build docker image and push
         id: docker_build
         uses: docker/build-push-action@v6
         with:
           file: Dockerfile.producer
-          tags: nikitades/carassius-producer:latest
+          tags: nikitades/carassius-producer:latest,${{ env.docker_image }}
           push: true
-          outputs: type=image,name=user/app:latest,push-by-digest=true,name-canonical=true,push=true
-      - name: Extract digest
-        id: digest
-        run: echo "digest=$(docker buildx imagetools inspect user/app:latest --format '{{index .Manifest.Descriptor "digest"}}')" >> $GITHUB_ENV
 
   build-consumer:
     if: github.ref == 'refs/heads/main'
@@ -93,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, lint]
     outputs:
-      digest: ${{ steps.digest.outputs.digest }}
+      image: ${{ steps.docker-image.outputs.docker_image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -106,17 +107,18 @@ jobs:
         with:
           username: nikitades
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - id: docker-image
+        run: |
+          DOCKER_TAG="nikitades/carassius-consumer:${GITHUB_SHA::48}"
+          echo "docker_image=${DOCKER_TAG}" >> $GITHUB_ENV
+          echo "docker_image=${DOCKER_TAG}" >> $GITHUB_OUTPUT
       - name: Build docker image and push
         id: docker_build
         uses: docker/build-push-action@v6
         with:
           file: Dockerfile.consumer
-          tags: nikitades/carassius-consumer:latest
+          tags: nikitades/carassius-consumer:latest,${{ env.docker_image }}
           push: true
-          outputs: type=image,name=user/app:latest,push-by-digest=true,name-canonical=true,push=true
-      - name: Extract digest
-        id: digest
-        run: echo "digest=$(docker buildx imagetools inspect user/app:latest --format '{{index .Manifest.Descriptor "digest"}}')" >> $GITHUB_ENV
 
   deploy:
     name: Deploy producer & consumer
@@ -128,8 +130,8 @@ jobs:
       - uses: mikefarah/yq@master
         with:
           cmd: |
-            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-consumer@${{ needs.build-consumer.outputs.digest }}"' 'k8s/charts/deployment_consumer.yml'
-            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-producer@${{ needs.build-producer.outputs.digest }}"' 'k8s/charts/deployment_producer.yml'
+            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-consumer@${{ needs.build-consumer.outputs.image }}"' 'k8s/charts/deployment_consumer.yml'
+            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-producer@${{ needs.build-producer.outputs.image }}"' 'k8s/charts/deployment_producer.yml'
             yq -i '.stringData.token = "${{ secrets.BOT_TOKEN }}"' 'k8s/charts/secret_consumer.yml'
             yq -i '.stringData.token = "${{ secrets.BOT_TOKEN }}"' 'k8s/charts/secret_producer.yml'
             yq -i '.stringData.database-url = "${{ secrets.DATABASE_URL }}"' 'k8s/charts/secret_consumer.yml'
