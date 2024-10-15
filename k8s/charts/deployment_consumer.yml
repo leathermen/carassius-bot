@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: carassius-consumer
+  labels:
+    app: carassius-consumer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: carassius-consumer
+  template:
+    metadata:
+      labels:
+        app: carassius-consumer
+    spec:
+      containers:
+        - name: consumer
+          image: nikitades/carassius-consumer:latest
+          resources:
+            requests:
+              memory: "250Mi"
+              cpu: "200m"
+            limits:
+              memory: "400Mi"
+              cpu: "400m"
+          env:
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-secret
+                  key: token
+            - name: CHANNELS
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-secret
+                  key: channels
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-secret
+                  key: database_url
