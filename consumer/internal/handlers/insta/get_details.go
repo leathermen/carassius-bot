@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -122,6 +123,9 @@ func getMediaDetails(reelID, csrf string) (*Details, error) {
 	defer resp.Body.Close()
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
+
+	log.Printf("media details:")
+	log.Printf(string(bodyBytes))
 
 	respData := &Details{}
 	err = json.Unmarshal(bodyBytes, respData)
