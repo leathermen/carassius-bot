@@ -6,6 +6,6 @@ spec:
   capacity:
     storage: 15Gi
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   hostPath:
     path: /var/lib/carassius-pv
