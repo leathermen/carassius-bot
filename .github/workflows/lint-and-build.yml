@@ -61,6 +61,8 @@ jobs:
     name: Build the image
     runs-on: ubuntu-latest
     needs: [test, lint]
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,12 +82,18 @@ jobs:
           file: Dockerfile.producer
           tags: nikitades/carassius-producer:latest
           push: true
+          outputs: type=image,name=user/app:latest,push-by-digest=true,name-canonical=true,push=true
+      - name: Extract digest
+        id: digest
+        run: echo "digest=$(docker buildx imagetools inspect user/app:latest --format '{{index .Manifest.Descriptor "digest"}}')" >> $GITHUB_ENV
 
   build-consumer:
     if: github.ref == 'refs/heads/main'
     name: Build the image
     runs-on: ubuntu-latest
     needs: [test, lint]
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -105,6 +113,10 @@ jobs:
           file: Dockerfile.consumer
           tags: nikitades/carassius-consumer:latest
           push: true
+          outputs: type=image,name=user/app:latest,push-by-digest=true,name-canonical=true,push=true
+      - name: Extract digest
+        id: digest
+        run: echo "digest=$(docker buildx imagetools inspect user/app:latest --format '{{index .Manifest.Descriptor "digest"}}')" >> $GITHUB_ENV
 
   deploy:
     name: Deploy producer & consumer
@@ -113,17 +125,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: mkdir /home/runner/.kube && echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
-      - id: get_digest
-        run: |
-          DIGEST_CONSUMER=$(docker pull nikitades/carassius-consumer:latest | grep "Digest:" | awk '{print $2}')
-          DIGEST_PRODUCER=$(docker pull nikitades/carassius-consumer:latest | grep "Digest:" | awk '{print $2}')
-          echo "DIGEST_CONSUMER=$DIGEST_CONSUMER" >> $GITHUB_ENV
-          echo "DIGEST_PRODUCER=$DIGEST_PRODUCER" >> $GITHUB_ENV
       - uses: mikefarah/yq@master
         with:
           cmd: |
-            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-consumer@${{ env.DIGEST_CONSUMER }}"' 'k8s/charts/deployment_consumer.yml'
-            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-producer@${{ env.DIGEST_PRODUCER }}"' 'k8s/charts/deployment_producer.yml'
+            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-consumer@${{ needs.build-consumer.outputs.digest }}"' 'k8s/charts/deployment_consumer.yml'
+            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-producer@${{ needs.build-producer.outputs.digest }}"' 'k8s/charts/deployment_producer.yml'
             yq -i '.stringData.token = "${{ secrets.BOT_TOKEN }}"' 'k8s/charts/secret_consumer.yml'
             yq -i '.stringData.token = "${{ secrets.BOT_TOKEN }}"' 'k8s/charts/secret_producer.yml'
             yq -i '.stringData.database-url = "${{ secrets.DATABASE_URL }}"' 'k8s/charts/secret_consumer.yml'
