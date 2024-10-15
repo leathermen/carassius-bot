@@ -34,4 +34,4 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: producer-secret
-                  key: database_url
+                  key: database-url
