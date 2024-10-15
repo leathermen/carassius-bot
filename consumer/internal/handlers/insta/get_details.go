@@ -125,7 +125,7 @@ func getMediaDetails(reelID, csrf string) (*Details, error) {
 	bodyBytes, _ := io.ReadAll(resp.Body)
 
 	log.Printf("media details:")
-	log.Printf(string(bodyBytes))
+	log.Println(string(bodyBytes))
 
 	respData := &Details{}
 	err = json.Unmarshal(bodyBytes, respData)
