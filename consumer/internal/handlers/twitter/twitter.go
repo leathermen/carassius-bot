@@ -129,6 +129,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 
 			return
 		}
+		defer file.Close()
 
 		inputfile := telego.InputFile{File: file}
 
@@ -185,6 +186,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 
 			return
 		}
+		defer file.Close()
 
 		inputfile := telego.InputFile{File: file}
 
@@ -249,6 +251,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 
 			return
 		}
+		defer file.Close()
 
 		inputfile := telego.InputFile{File: file}
 

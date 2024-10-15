@@ -11,6 +11,7 @@ import (
 	"github.com/mymmrac/telego/telegoutil"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
+	"github.com/nikitades/carassius-bot/shared/request"
 )
 
 const (
@@ -36,6 +37,71 @@ func (rh *Handler) Handle(userID int64, msg string, msgID int) {
 			log.Printf("failed to remove message from queue: %d", msgID)
 		}
 	}()
+	botname, _ := rh.bot.GetMyName(nil)
+	redditID, err := extractRedditID(msg)
+	if err != nil {
+		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
+			ChatID: telegoutil.ID(userID),
+			Text:   "Malformed Reddit media link!",
+		}); err != nil {
+			log.Printf("failed to send malformed reddit link message, user %d", userID)
+		}
+
+		return
+	}
+	mediaFile, err := rh.db.GetMediaFileBySocialNetworkID(redditID, request.TypeReddit.String(), botname.Name)
+
+	if err != nil {
+		log.Printf("failed to lookup media files DB: %s", err)
+	}
+
+	if mediaFile != nil { //nolint:nestif
+		if mediaFile.FileType == "video" {
+			if _, err := rh.bot.SendVideo(&telego.SendVideoParams{
+				ChatID: telego.ChatID{ID: userID},
+				Video: telego.InputFile{
+					FileID: mediaFile.FileID,
+				},
+			}); err != nil {
+				log.Printf("failed to resend video to user %d: %s", userID, err)
+			}
+
+			for _, c := range rh.channels {
+				if _, err := rh.bot.SendVideo(&telego.SendVideoParams{
+					ChatID: telego.ChatID{ID: c},
+					Video: telego.InputFile{
+						FileID: mediaFile.FileID,
+					},
+				}); err != nil {
+					log.Printf("failed to resend video to channel %d: %s", c, err)
+				}
+			}
+		}
+
+		if mediaFile.FileType == "image" {
+			if _, err := rh.bot.SendPhoto(&telego.SendPhotoParams{
+				ChatID: telego.ChatID{ID: userID},
+				Photo: telego.InputFile{
+					FileID: mediaFile.FileID,
+				},
+			}); err != nil {
+				log.Printf("failed to resend video to user %d: %s", userID, err)
+			}
+
+			for _, c := range rh.channels {
+				if _, err := rh.bot.SendPhoto(&telego.SendPhotoParams{
+					ChatID: telego.ChatID{ID: c},
+					Photo: telego.InputFile{
+						FileID: mediaFile.FileID,
+					},
+				}); err != nil {
+					log.Printf("failed to resend video to channel %d: %s", c, err)
+				}
+			}
+		}
+
+		return
+	}
 
 	var (
 		success bool
@@ -57,7 +123,7 @@ func (rh *Handler) Handle(userID int64, msg string, msgID int) {
 		dataStr, _ := url.QueryUnescape(dataRaw)
 		dataStr = strings.Replace(dataStr, "&quot;", "\"", -1)
 
-		shreddata := &ShredditData{}
+		shreddata := &ShredditDataType{}
 
 		if err := json.Unmarshal([]byte(dataStr), shreddata); err != nil {
 			errmsg = markuperrtxt
@@ -101,7 +167,7 @@ func (rh *Handler) Handle(userID int64, msg string, msgID int) {
 
 	switch typ {
 	case "video":
-		if err := rh.video(userID, msg); err != nil {
+		if err := rh.video(userID, msg, redditID, botname); err != nil {
 			if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
 				ChatID: telegoutil.ID(userID),
 				Text:   "Failed to download Reddit video :C",
@@ -110,7 +176,7 @@ func (rh *Handler) Handle(userID int64, msg string, msgID int) {
 			}
 		}
 	case "image":
-		if err := rh.image(userID, msg); err != nil {
+		if err := rh.image(userID, msg, redditID, botname); err != nil {
 			if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
 				ChatID: telegoutil.ID(userID),
 				Text:   "Failed to download Reddit image :C",
@@ -131,8 +197,4 @@ func (rh *Handler) Handle(userID int64, msg string, msgID int) {
 
 func (rh *Handler) Name() string {
 	return Code
-}
-
-func (rh *Handler) image(userID int64, url string) error {
-	return nil
 }

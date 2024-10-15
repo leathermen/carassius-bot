@@ -85,6 +85,8 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 		return
 	}
 
+	defer file.Close()
+
 	inputfile := telego.InputFile{File: file}
 
 	params := telego.SendVideoParams{

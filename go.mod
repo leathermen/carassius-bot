@@ -6,7 +6,6 @@ require github.com/mymmrac/telego v0.31.3
 
 require (
 	github.com/gocolly/colly v1.2.0
-	github.com/grafov/m3u8 v0.12.0
 	github.com/lib/pq v1.10.9
 )
 
