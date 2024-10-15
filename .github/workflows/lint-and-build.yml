@@ -129,8 +129,8 @@ jobs:
             yq -i '.stringData.database-url = "${{ secrets.DATABASE_URL }}"' 'k8s/charts/secret_consumer.yml'
             yq -i '.stringData.database-url = "${{ secrets.DATABASE_URL }}"' 'k8s/charts/secret_producer.yml'
             yq -i '.stringData.channels = "${{ secrets.CHANNELS }}"' 'k8s/charts/secret_consumer.yml'
+            yq -i '.stringData.user = "${{ secrets.DATABASE_USER }}"' 'k8s/charts/secret_postgres.yml'
+            yq -i '.stringData.password = "${{ secrets.DATABASE_PWD }}"' 'k8s/charts/secret_postgres.yml'
+            yq -i '.stringData.name = "${{ secrets.DATABASE_NAME }}"' 'k8s/charts/secret_postgres.yml'
             yq -i '.data[.dockerconfigjson] = "${{ secrets.DOCKERHUB_AUTH_CONFIG_B64 }}"' 'k8s/charts/secret_dockerhub.yml'
-            yq -i '.spec.template.spec.containers[0].env[] | select(.name == "POSTGRES_USER") | .value = "${{ secrets.DATABASE_USER }}"' 'k8s/charts/deployment_postgres.yml'
-            yq -i '.spec.template.spec.containers[0].env[] | select(.name == "POSTGRES_PASSWORD") | .value = "${{ secrets.DATABASE_PWD }}"' 'k8s/charts/deployment_postgres.yml'
-            yq -i '.spec.template.spec.containers[0].env[] | select(.name == "POSTGRES_DB") | .value = "${{ secrets.DATABASE_NAME }}"' 'k8s/charts/deployment_postgres.yml'
       - run: kubectl --kubeconfig=/home/runner/.kube/config apply -f k8s/charts --recursive -n carassius

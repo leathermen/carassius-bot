@@ -19,11 +19,20 @@ spec:
           image: postgres:16
           env:
             - name: POSTGRES_USER
-              value: replaceme
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: user
             - name: POSTGRES_PASSWORD
-              value: replaceme
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
             - name: POSTGRES_DB
-              value: replaceme
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: name
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
