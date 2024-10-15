@@ -3,6 +3,9 @@ package handlers
 import (
 	"github.com/mymmrac/telego"
 	"github.com/nikitades/carassius-bot/consumer/internal/handlers/insta"
+	"github.com/nikitades/carassius-bot/consumer/internal/handlers/pinterest"
+	"github.com/nikitades/carassius-bot/consumer/internal/handlers/reddit"
+	"github.com/nikitades/carassius-bot/consumer/internal/handlers/tiktok"
 	"github.com/nikitades/carassius-bot/consumer/internal/handlers/twitter"
 	"github.com/nikitades/carassius-bot/consumer/internal/handlers/youtube"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
@@ -25,6 +28,15 @@ func NewSuper(bot *telego.Bot, q queue.Queue, db db.Database, channels []int64) 
 
 	twhandler := twitter.New(bot, q, db, channels)
 	handlers[twhandler.Name()] = twhandler
+
+	reddithanadler := reddit.New(bot, q, db, channels)
+	handlers[reddithanadler.Name()] = reddithanadler
+
+	tiktokhandler := tiktok.New(bot, q)
+	handlers[tiktokhandler.Name()] = tiktokhandler
+
+	pinthandler := pinterest.New(bot, q)
+	handlers[pinthandler.Name()] = pinthandler
 
 	return &SuperHandler{
 		handlers,
