@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: carassius-consumer
+  name: carassius-producer
   labels:
-    app: carassius-consumer
+    app: carassius-producer
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: carassius-consumer
+      app: carassius-producer
   template:
     metadata:
       labels:
-        app: carassius-consumer
+        app: carassius-producer
     spec:
       containers:
-        - name: consumer
-          image: nikitades/carassius-consumer:latest
+        - name: producer
+          image: nikitades/carassius-producer:latest
           resources:
             requests:
               memory: "100Mi"
@@ -34,4 +34,4 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: producer-secret
-                  key: database_url
+                  key: database-url
