@@ -28,6 +28,10 @@ func main() {
 		log.Fatalf("failed to create db connection: %s", err)
 	}
 
+	if err = dbconn.Ping(); err != nil {
+		log.Fatal("database is unreachable")
+	}
+
 	db := db.New(dbconn)
 
 	debug := os.Getenv("DEBUG") == "1"
