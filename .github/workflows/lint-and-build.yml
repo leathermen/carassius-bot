@@ -112,7 +112,7 @@ jobs:
     needs: [build-producer, build-consumer]
     steps:
       - uses: actions/checkout@v4
-      - run: echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+      - run: mkdir /home/runner/.kube && echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
       - id: get_digest
         run: |
           DIGEST_CONSUMER=$(docker pull nikitades/carassius-consumer:latest | grep "Digest:" | awk '{print $2}')
