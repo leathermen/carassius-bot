@@ -13,7 +13,7 @@ func DownloadFile(url string, ext ...string) (*os.File, error) {
 	resp, err := http.Get(url) //nolint:noctx
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get url <%s>: %w", url, err)
 	}
 
 	defer resp.Body.Close()
