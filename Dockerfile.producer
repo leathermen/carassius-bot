@@ -21,4 +21,4 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=build /bin/producer /app/producer
 
-ENTRYPOINT [ "/bin/producer" ]
+ENTRYPOINT [ "/app/producer" ]
