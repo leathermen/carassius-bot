@@ -35,8 +35,10 @@ func (b *Producer) thanks(update telego.Update) {
 		// Добавьте здесь другие эмоджи, если нужно
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	index := rand.Intn(len(heartEmojis))
+	source := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(source)
+
+	index := r.Intn(len(heartEmojis))
 	heartEmoji := heartEmojis[index]
 
 	if _, err := b.bot.SendMessage(&telego.SendMessageParams{
