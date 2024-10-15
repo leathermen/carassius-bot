@@ -39,4 +39,4 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: consumer-secret
-                  key: database-url
+                  key: database_url
