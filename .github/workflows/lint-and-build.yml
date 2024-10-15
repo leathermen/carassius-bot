@@ -132,4 +132,4 @@ jobs:
             yq -i '.spec.template.spec.containers[0].env[] | select(.name == "POSTGRES_USER") | .value = "${{ secrets.DATABASE_USER }}"' 'k8s/charts/deployment_postgres.yml'
             yq -i '.spec.template.spec.containers[0].env[] | select(.name == "POSTGRES_PASSWORD") | .value = "${{ secrets.DATABASE_PWD }}"' 'k8s/charts/deployment_postgres.yml'
             yq -i '.spec.template.spec.containers[0].env[] | select(.name == "POSTGRES_DB") | .value = "${{ secrets.DATABASE_NAME }}"' 'k8s/charts/deployment_postgres.yml'
-      - run: kubectl --kubeconfig=/home/runner/.kube apply -f k8s/charts --recursive
+      - run: kubectl --kubeconfig=/home/runner/.kube/config apply -f k8s/charts --recursive
