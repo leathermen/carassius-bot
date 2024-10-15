@@ -14,6 +14,8 @@ spec:
       labels:
         app: carassius-producer
     spec:
+      imagePullSecrets:
+        - name: dockerhub-secret
       containers:
         - name: producer
           image: nikitades/carassius-producer:latest

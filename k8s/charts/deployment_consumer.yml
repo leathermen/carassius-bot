@@ -14,6 +14,8 @@ spec:
       labels:
         app: carassius-consumer
     spec:
+      imagePullSecrets:
+        - name: dockerhub-secret
       containers:
         - name: consumer
           image: nikitades/carassius-consumer:latest
