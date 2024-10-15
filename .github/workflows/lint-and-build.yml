@@ -130,8 +130,8 @@ jobs:
       - uses: mikefarah/yq@master
         with:
           cmd: |
-            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-consumer@${{ needs.build-consumer.outputs.image }}"' 'k8s/charts/deployment_consumer.yml'
-            yq -i '.spec.template.spec.containers[0].image = "nikitades/carassius-producer@${{ needs.build-producer.outputs.image }}"' 'k8s/charts/deployment_producer.yml'
+            yq -i '.spec.template.spec.containers[0].image = "${{ needs.build-consumer.outputs.image }}"' 'k8s/charts/deployment_consumer.yml'
+            yq -i '.spec.template.spec.containers[0].image = "${{ needs.build-producer.outputs.image }}"' 'k8s/charts/deployment_producer.yml'
             yq -i '.stringData.token = "${{ secrets.BOT_TOKEN }}"' 'k8s/charts/secret_consumer.yml'
             yq -i '.stringData.token = "${{ secrets.BOT_TOKEN }}"' 'k8s/charts/secret_producer.yml'
             yq -i '.stringData.database-url = "${{ secrets.DATABASE_URL }}"' 'k8s/charts/secret_consumer.yml'
