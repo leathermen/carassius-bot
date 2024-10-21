@@ -48,8 +48,12 @@ type Details struct {
 				Height int `json:"height"`
 				Width  int `json:"width"`
 			} `json:"dimensions"`
-			VideoURL  string `json:"video_url"`
-			Thumbnail string `json:"thumbnail_src"`
+			VideoURL         string `json:"video_url"`
+			DisplayResources []struct {
+				SRC    string `json:"src"`
+				Width  int    `json:"config_width"`
+				Height int    `json:"config_height"`
+			} `json:"display_resources"`
 		} `json:"xdt_shortcode_media"`
 	} `json:"data"`
 }

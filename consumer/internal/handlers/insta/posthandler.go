@@ -81,7 +81,26 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 		return
 	}
 
-	file, err := helpers.DownloadFile(postDetails.Data.Media.Thumbnail)
+	if len(postDetails.Data.Media.DisplayResources) == 0 {
+		log.Printf("failed to find appropriate ig post image sizes")
+		if _, err := ph.bot.SendMessage(&telego.SendMessageParams{
+			ChatID: telegoutil.ID(userID),
+			Text:   "Failed to download post",
+		}); err != nil {
+			log.Printf("failed to send failed to download post message, post ID %s, userID %d", postID, userID)
+		}
+
+		return
+	}
+
+	image := postDetails.Data.Media.DisplayResources[0]
+	for _, resource := range postDetails.Data.Media.DisplayResources {
+		if resource.Height*resource.Width > image.Height*image.Width {
+			image = resource
+		}
+	}
+
+	file, err := helpers.DownloadFile(image.SRC)
 	if err != nil {
 		log.Printf("failed to download post image")
 		if _, err := ph.bot.SendMessage(&telego.SendMessageParams{
