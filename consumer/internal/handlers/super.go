@@ -43,26 +43,26 @@ func NewSuper(bot *telego.Bot, q queue.Queue, db db.Database, channels []int64) 
 	}
 }
 
-func (sh *SuperHandler) HandleTiktok(userID int64, msg string, msgID int) {
-	sh.handlers[request.TypeTiktok.String()].Handle(userID, msg, msgID)
+func (sh *SuperHandler) HandleTiktok(userID int64, msg string, msgID int) error {
+	return sh.handlers[request.TypeTiktok.String()].Handle(userID, msg, msgID)
 }
 
-func (sh *SuperHandler) HandleInsta(userID int64, msg string, msgID int) {
-	sh.handlers[request.TypeInsta.String()].Handle(userID, msg, msgID)
+func (sh *SuperHandler) HandleInsta(userID int64, msg string, msgID int) error {
+	return sh.handlers[request.TypeInsta.String()].Handle(userID, msg, msgID)
 }
 
-func (sh *SuperHandler) HandleReddit(userID int64, msg string, msgID int) {
-	sh.handlers[request.TypeReddit.String()].Handle(userID, msg, msgID)
+func (sh *SuperHandler) HandleReddit(userID int64, msg string, msgID int) error {
+	return sh.handlers[request.TypeReddit.String()].Handle(userID, msg, msgID)
 }
 
-func (sh *SuperHandler) HandleTwitter(userID int64, msg string, msgID int) {
-	sh.handlers[request.TypeTwitter.String()].Handle(userID, msg, msgID)
+func (sh *SuperHandler) HandleTwitter(userID int64, msg string, msgID int) error {
+	return sh.handlers[request.TypeTwitter.String()].Handle(userID, msg, msgID)
 }
 
-func (sh *SuperHandler) HandleYoutube(userID int64, msg string, msgID int) {
-	sh.handlers[request.TypeYoutube.String()].Handle(userID, msg, msgID)
+func (sh *SuperHandler) HandleYoutube(userID int64, msg string, msgID int) error {
+	return sh.handlers[request.TypeYoutube.String()].Handle(userID, msg, msgID)
 }
 
-func (sh *SuperHandler) HandlePinterest(userID int64, msg string, msgID int) {
-	sh.handlers[request.TypePinterest.String()].Handle(userID, msg, msgID)
+func (sh *SuperHandler) HandlePinterest(userID int64, msg string, msgID int) error {
+	return sh.handlers[request.TypePinterest.String()].Handle(userID, msg, msgID)
 }

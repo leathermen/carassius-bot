@@ -14,7 +14,6 @@ import (
 	"github.com/nikitades/carassius-bot/consumer/internal/db"
 	"github.com/nikitades/carassius-bot/consumer/internal/handlers"
 	"github.com/nikitades/carassius-bot/consumer/pkg"
-	"github.com/nikitades/carassius-bot/shared/bothelper"
 
 	_ "github.com/lib/pq"
 )
@@ -62,7 +61,7 @@ func main() {
 		channels = append(channels, channel)
 	}
 
-	consumer := pkg.NewConsumer(bothelper.Botname(bot), db, handlers.NewSuper(bot, db, db, channels))
+	consumer := pkg.NewConsumer(bot, db, handlers.NewSuper(bot, db, db, channels))
 
 	var signalChan chan (os.Signal) = make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)

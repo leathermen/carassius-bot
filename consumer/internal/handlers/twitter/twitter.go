@@ -7,6 +7,7 @@ import (
 	"github.com/mymmrac/telego/telegoutil"
 	"github.com/nikitades/carassius-bot/consumer/internal/helpers"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
+	"github.com/nikitades/carassius-bot/consumer/pkg/handler"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
 	"github.com/nikitades/carassius-bot/shared/request"
 )
@@ -25,7 +26,7 @@ func New(bot *telego.Bot, q queue.Queue, db db.Database, channels []int64) *Hand
 	return &Handler{bot, db, q, channels}
 }
 
-func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
+func (h *Handler) Handle(userID int64, msg string, msgID int) error { //nolint:gocyclo
 	defer func() {
 		if err := h.q.DeleteMessageFromQueue(msgID); err != nil {
 			log.Printf("failed to remove message from queue: %d", msgID)
@@ -36,14 +37,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 
 	if !ok {
 		log.Printf("failed to process twitter request: %s", msg)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Malformed twitter link!",
-		}); err != nil {
-			log.Printf("failed to send malformed tweet url msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	botname, _ := h.bot.GetMyName(nil)
@@ -86,33 +80,19 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 			}
 		}
 
-		return
+		return nil
 	}
 
 	guestToken, err := getGuestToken()
 	if err != nil {
 		log.Printf("failed to get twitter guest token: %s", err)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Failed to get Twitter media!",
-		}); err != nil {
-			log.Printf("failed to send failed to get guest token msg, user %d", userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	tweetDetails, err := getTweetDetails(tweetID, guestToken)
 	if err != nil {
 		log.Printf("failed to get tweet details: %s", err)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Failed to get Twitter media!",
-		}); err != nil {
-			log.Printf("failed to send unsupported twitter media type msg, user %d", userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	switch tweetDetails.typ {
@@ -120,14 +100,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 		file, err := helpers.DownloadFile(tweetDetails.url)
 		if err != nil {
 			log.Printf("failed to download twitter attachment")
-			if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-				ChatID: telegoutil.ID(userID),
-				Text:   "Failed to download reel",
-			}); err != nil {
-				log.Printf("failed to send failed to download twitter attachment, media url %s, userID %d", tweetDetails.url, userID)
-			}
-
-			return
+			return handler.ErrFailedToGetMedia
 		}
 		defer file.Close()
 
@@ -141,14 +114,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 		})
 		if err != nil {
 			log.Printf("failed to send twitter video, url %s, user %d", tweetDetails.url, userID)
-			if _, err = h.bot.SendMessage(&telego.SendMessageParams{
-				ChatID: telegoutil.ID(userID),
-				Text:   "Failed to download Twitter media!",
-			}); err != nil {
-				log.Printf("failed to send failed to download twitter media, user id %d", userID)
-			}
-
-			return
+			return handler.ErrFailedToGetMedia
 		}
 
 		for _, c := range h.channels {
@@ -177,14 +143,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 		file, err := helpers.DownloadFile(tweetDetails.url)
 		if err != nil {
 			log.Printf("failed to download twitter attachment")
-			if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-				ChatID: telegoutil.ID(userID),
-				Text:   "Failed to download reel",
-			}); err != nil {
-				log.Printf("failed to send failed to download twitter attachment, media url %s, userID %d", tweetDetails.url, userID)
-			}
-
-			return
+			return handler.ErrFailedToGetMedia
 		}
 		defer file.Close()
 
@@ -196,14 +155,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 		})
 		if err != nil {
 			log.Printf("failed to send twitter photo, url %s, user %d", tweetDetails.url, userID)
-			if _, err = h.bot.SendMessage(&telego.SendMessageParams{
-				ChatID: telegoutil.ID(userID),
-				Text:   "Failed to download Twitter media!",
-			}); err != nil {
-				log.Printf("failed to send failed to download twitter media, user id %d", userID)
-			}
-
-			return
+			return handler.ErrFailedToGetMedia
 		}
 
 		fileID := "nothing"
@@ -215,7 +167,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 
 		if fileID == "nothing" {
 			log.Printf("failed to find TG file id")
-			return
+			return handler.ErrFailedToGetMedia
 		}
 
 		for _, c := range h.channels {
@@ -242,14 +194,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 		file, err := helpers.DownloadFile(tweetDetails.url, tweetDetails.url[len(tweetDetails.url)-3:])
 		if err != nil {
 			log.Printf("failed to download twitter attachment")
-			if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-				ChatID: telegoutil.ID(userID),
-				Text:   "Failed to download reel",
-			}); err != nil {
-				log.Printf("failed to send failed to download twitter attachment, media url %s, userID %d", tweetDetails.url, userID)
-			}
-
-			return
+			return handler.ErrFailedToGetMedia
 		}
 		defer file.Close()
 
@@ -263,14 +208,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 		})
 		if err != nil {
 			log.Printf("failed to send twitter gif, url %s, user %d", tweetDetails.url, userID)
-			if _, err = h.bot.SendMessage(&telego.SendMessageParams{
-				ChatID: telegoutil.ID(userID),
-				Text:   "Failed to download Twitter media!",
-			}); err != nil {
-				log.Printf("failed to send failed to download twitter media, user id %d", userID)
-			}
-
-			return
+			return handler.ErrFailedToGetMedia
 		}
 
 		for _, c := range h.channels {
@@ -296,6 +234,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) { //nolint:gocyclo
 			log.Printf("failed to save twitter media post download: %s", err)
 		}
 	}
+	return nil
 }
 
 func (h *Handler) Name() string {

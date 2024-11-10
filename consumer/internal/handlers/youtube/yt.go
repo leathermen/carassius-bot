@@ -10,6 +10,7 @@ import (
 	"github.com/mymmrac/telego"
 	"github.com/mymmrac/telego/telegoutil"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
+	"github.com/nikitades/carassius-bot/consumer/pkg/handler"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
 	"github.com/nikitades/carassius-bot/shared/request"
 	"github.com/thanhpk/randstr"
@@ -37,14 +38,7 @@ func (h *Handler) Name() string {
 	return Code
 }
 
-func (h *Handler) Handle(userID int64, msg string, msgID int) {
-	if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-		ChatID: telego.ChatID{ID: userID},
-		Text:   "Please be aware that loading videos from YouTube may take some time.",
-	}); err != nil {
-		log.Printf("failed to send youtube warning, user %d: %s", userID, err)
-	}
-
+func (h *Handler) Handle(userID int64, msg string, msgID int) error {
 	defer func() {
 		if err := h.q.DeleteMessageFromQueue(msgID); err != nil {
 			log.Printf("failed to remove message from queue: %d", msgID)
@@ -55,14 +49,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 
 	if !ok {
 		log.Printf("failed to process youtube request: %s", msg)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Malformed YouTube video link!",
-		}); err != nil {
-			log.Printf("failed to send malformed video msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	botname, _ := h.bot.GetMyName(nil)
@@ -82,7 +69,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 			log.Printf("failed to resend video: %s", err)
 		}
 
-		return
+		return nil
 	}
 
 	client := youtube.Client{}
@@ -90,28 +77,14 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 	video, err := client.GetVideo(msg)
 	if err != nil {
 		log.Printf("failed to download video: %s", err)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Can't download this media!",
-		}); err != nil {
-			log.Printf("failed to send can't download msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	formats := video.Formats.WithAudioChannels()
 
 	if len(formats) == 0 {
 		log.Printf("no formats found with audio channels: %s", msg)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Can't download this media!",
-		}); err != nil {
-			log.Printf("failed to send can't download msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	var optimalFormat youtube.Format
@@ -124,27 +97,13 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 
 	if optimalFormat.ContentLength > maxTGFileSize || optimalFormat.ContentLength == 0 {
 		log.Printf("file size exceeded: %s", msg)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Media file is too large!",
-		}); err != nil {
-			log.Printf("failed to send too large file msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	file, err := os.CreateTemp("", randstr.String(32)+".mp4")
 	if err != nil {
 		log.Printf("failed to create a tmp file: %v", err)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Can't download this media!",
-		}); err != nil {
-			log.Printf("failed to send can't download msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 	defer file.Close()
 
@@ -152,27 +111,13 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 	stream, _, err := client.GetStream(video, &optimalFormat)
 	if err != nil {
 		log.Printf("failed to download video: %v", err)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Can't download this media!",
-		}); err != nil {
-			log.Printf("failed to send can't download msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	_, err = io.Copy(file, stream)
 	if err != nil {
 		log.Printf("failed to copy video file: %v", err)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Can't download this media!",
-		}); err != nil {
-			log.Printf("failed to send can't download msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	_, _ = file.Seek(0, 0) // ebal w ryt
@@ -189,14 +134,7 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 	tgMsg, err := h.bot.SendVideo(&params)
 	if err != nil {
 		log.Printf("failed to send tg video to user: %s", err)
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Can't download this media!",
-		}); err != nil {
-			log.Printf("failed to send can't download msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	for _, c := range h.channels {
@@ -221,4 +159,6 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 	if err := h.db.InsertMediaFile(mediaFileData); err != nil {
 		log.Printf("failed to save yt media post download: %s", err)
 	}
+
+	return nil
 }

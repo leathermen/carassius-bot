@@ -8,8 +8,8 @@ import (
 
 	"github.com/gocolly/colly"
 	"github.com/mymmrac/telego"
-	"github.com/mymmrac/telego/telegoutil"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
+	"github.com/nikitades/carassius-bot/consumer/pkg/handler"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
 	"github.com/nikitades/carassius-bot/shared/request"
 )
@@ -31,7 +31,7 @@ func New(bot *telego.Bot, q queue.Queue, db db.Database, channels []int64) *Hand
 	return &Handler{bot, q, db, channels}
 }
 
-func (rh *Handler) Handle(userID int64, msg string, msgID int) {
+func (rh *Handler) Handle(userID int64, msg string, msgID int) error {
 	defer func() {
 		if err := rh.q.DeleteMessageFromQueue(msgID); err != nil {
 			log.Printf("failed to remove message from queue: %d", msgID)
@@ -40,14 +40,8 @@ func (rh *Handler) Handle(userID int64, msg string, msgID int) {
 	botname, _ := rh.bot.GetMyName(nil)
 	redditID, err := extractRedditID(msg)
 	if err != nil {
-		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Malformed Reddit media link!",
-		}); err != nil {
-			log.Printf("failed to send malformed reddit link message, user %d", userID)
-		}
-
-		return
+		log.Printf("failed to get reddit ID")
+		return handler.ErrFailedToGetMedia
 	}
 	mediaFile, err := rh.db.GetMediaFileBySocialNetworkID(redditID, request.TypeReddit.String(), botname.Name)
 
@@ -100,7 +94,7 @@ func (rh *Handler) Handle(userID int64, msg string, msgID int) {
 			}
 		}
 
-		return
+		return nil
 	}
 
 	var (
@@ -143,56 +137,31 @@ func (rh *Handler) Handle(userID int64, msg string, msgID int) {
 
 	if err := c.Visit(msg); err != nil {
 		log.Printf("failed to scrape reddit page: %s", err)
-		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Failed to get Reddit page :C",
-		}); err != nil {
-			log.Printf("failed to send failed to get reddig page msg, user %d", userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	if !success {
 		log.Printf("failed to serve reddit: %s, post: %s", errmsg, msg)
-		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   errmsg,
-		}); err != nil {
-			log.Printf("failed to send <%s> msg, user %d", errmsg, userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	switch typ {
 	case "video":
 		if err := rh.video(userID, msg, redditID, botname); err != nil {
-			if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
-				ChatID: telegoutil.ID(userID),
-				Text:   "Failed to download Reddit video :C",
-			}); err != nil {
-				log.Printf("failed to send failed to download reddit video, user %d", userID)
-			}
+			log.Printf("failed to download reddit video")
+			return handler.ErrFailedToGetMedia
 		}
 	case "image":
 		if err := rh.image(userID, msg, redditID, botname); err != nil {
-			if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
-				ChatID: telegoutil.ID(userID),
-				Text:   "Failed to download Reddit image :C",
-			}); err != nil {
-				log.Printf("failed to send failed to download reddit image, user %d", userID)
-			}
+			log.Printf("failed to download reddit image")
+			return handler.ErrFailedToGetMedia
 		}
 	default:
 		log.Printf("unsupported media type provided: %s, user %d", typ, userID)
-		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Unsupported Reddit media type!",
-		}); err != nil {
-			log.Printf("failed to send unsupported media type msg, user %d", userID)
-		}
+		return handler.ErrUnsupported
 	}
+
+	return nil
 }
 
 func (rh *Handler) Name() string {

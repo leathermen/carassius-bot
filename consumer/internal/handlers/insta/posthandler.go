@@ -8,6 +8,7 @@ import (
 	"github.com/mymmrac/telego/telegoutil"
 	"github.com/nikitades/carassius-bot/consumer/internal/helpers"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
+	"github.com/nikitades/carassius-bot/consumer/pkg/handler"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
 	"github.com/nikitades/carassius-bot/shared/request"
 )
@@ -33,19 +34,11 @@ func newPostHandler(bot *telego.Bot, db db.Database, csrfprovider *csrfprovider,
 	return &posthandler{bot, db, csrfprovider, channels}
 }
 
-func (ph *posthandler) Handle(userID int64, msg string, _ int) {
+func (ph *posthandler) Handle(userID int64, msg string, _ int) error {
 	postID, found := getPostID(msg)
 
 	if !found {
-		log.Printf("failed to find post ID")
-		if _, err := ph.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Malformed Instagram post link!",
-		}); err != nil {
-			log.Printf("failed to send malformed post link message, user %d", userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	botname, _ := ph.bot.GetMyName(nil)
@@ -65,32 +58,18 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 			log.Printf("failed to resend video: %s", err)
 		}
 
-		return
+		return nil
 	}
 
 	postDetails, err := getMediaDetails(postID, ph.csrfprovider.getCSRF())
 	if err != nil {
 		log.Printf("failed to get post details, post ID %s, user ID %d", postID, userID)
-		if _, err := ph.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Failed to download post",
-		}); err != nil {
-			log.Printf("failed to send failed to download photo, post ID %s, user ID %d", postID, userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	if len(postDetails.Data.Media.DisplayResources) == 0 {
 		log.Printf("failed to find appropriate ig post image sizes")
-		if _, err := ph.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Failed to download post",
-		}); err != nil {
-			log.Printf("failed to send failed to download post message, post ID %s, userID %d", postID, userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	image := postDetails.Data.Media.DisplayResources[0]
@@ -103,14 +82,7 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 	file, err := helpers.DownloadFile(image.SRC)
 	if err != nil {
 		log.Printf("failed to download post image")
-		if _, err := ph.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Failed to download post",
-		}); err != nil {
-			log.Printf("failed to send failed to download photo, post ID %s, userID %d", postID, userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	defer file.Close()
@@ -125,14 +97,7 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 	tgMsg, err := ph.bot.SendPhoto(&params)
 	if err != nil {
 		log.Printf("failed to send tg photo to user: %s", err)
-		if _, err := ph.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Can't download this media!",
-		}); err != nil {
-			log.Printf("failed to send can't download msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	fileID := "nothing"
@@ -144,7 +109,7 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 
 	if fileID == "nothing" {
 		log.Printf("failed to find TG file id")
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	for _, c := range ph.channels {
@@ -167,4 +132,6 @@ func (ph *posthandler) Handle(userID int64, msg string, _ int) {
 	if err := ph.db.InsertMediaFile(mediaFileData); err != nil {
 		log.Printf("failed to save yt media post download: %s", err)
 	}
+
+	return nil
 }

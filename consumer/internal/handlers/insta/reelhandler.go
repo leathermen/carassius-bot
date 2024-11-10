@@ -8,6 +8,7 @@ import (
 	"github.com/mymmrac/telego/telegoutil"
 	"github.com/nikitades/carassius-bot/consumer/internal/helpers"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
+	"github.com/nikitades/carassius-bot/consumer/pkg/handler"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
 	"github.com/nikitades/carassius-bot/shared/request"
 )
@@ -24,19 +25,11 @@ func newReelHandler(bot *telego.Bot, db db.Database, csrfprovider *csrfprovider,
 	return &reelhandler{bot, db, csrfprovider, channels}
 }
 
-func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
+func (rh *reelhandler) Handle(userID int64, msg string, _ int) error {
 	reelID, found := getReelID(msg)
 
 	if !found {
-		log.Printf("failed to find reel ID")
-		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Malformed Instagram Reel link!",
-		}); err != nil {
-			log.Printf("failed to send malformed reel link message, user %d", userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	botname, _ := rh.bot.GetMyName(nil)
@@ -56,33 +49,18 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 			log.Printf("failed to resend video: %s", err)
 		}
 
-		return
+		return nil
 	}
 
 	reelDetails, err := getMediaDetails(reelID, rh.csrfprovider.getCSRF())
 	if err != nil {
-		log.Printf("failed to get reels details, reel ID %s, user ID %d", reelID, userID)
-		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Failed to download reel",
-		}); err != nil {
-			log.Printf("failed to send failed to download video, reel ID %s, user ID %d", reelID, userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	file, err := helpers.DownloadFile(reelDetails.Data.Media.VideoURL)
 	if err != nil {
 		log.Printf("failed to download reels video: %s", err)
-		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "Failed to download reel",
-		}); err != nil {
-			log.Printf("failed to send failed to download video, reel ID %s, userID %d", reelID, userID)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	defer file.Close()
@@ -99,14 +77,7 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 	tgMsg, err := rh.bot.SendVideo(&params)
 	if err != nil {
 		log.Printf("failed to send tg video to user: %s", err)
-		if _, err := rh.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telego.ChatID{ID: userID},
-			Text:   "Can't download this media!",
-		}); err != nil {
-			log.Printf("failed to send can't download msg, user %d: %s", userID, err)
-		}
-
-		return
+		return handler.ErrFailedToGetMedia
 	}
 
 	for _, c := range rh.channels {
@@ -131,6 +102,8 @@ func (rh *reelhandler) Handle(userID int64, msg string, _ int) {
 	if err := rh.db.InsertMediaFile(mediaFileData); err != nil {
 		log.Printf("failed to save yt media post download: %s", err)
 	}
+
+	return nil
 }
 
 func getReelID(url string) (string, bool) {

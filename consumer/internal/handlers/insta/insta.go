@@ -4,15 +4,15 @@ import (
 	"log"
 
 	"github.com/mymmrac/telego"
-	"github.com/mymmrac/telego/telegoutil"
 	"github.com/nikitades/carassius-bot/consumer/pkg/db"
+	"github.com/nikitades/carassius-bot/consumer/pkg/handler"
 	"github.com/nikitades/carassius-bot/consumer/pkg/queue"
 )
 
 const Code = "insta"
 
 type subhandler interface {
-	Handle(userID int64, msg string, msgID int)
+	Handle(userID int64, msg string, msgID int) error
 }
 
 type Handler struct {
@@ -36,7 +36,7 @@ func (h *Handler) Name() string {
 	return Code
 }
 
-func (h *Handler) Handle(userID int64, msg string, msgID int) {
+func (h *Handler) Handle(userID int64, msg string, msgID int) error {
 	defer func() {
 		if err := h.q.DeleteMessageFromQueue(msgID); err != nil {
 			log.Printf("failed to remove message from queue: %d", msgID)
@@ -47,15 +47,8 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) {
 
 	if !found {
 		log.Printf("unsupported insta media provided")
-		if _, err := h.bot.SendMessage(&telego.SendMessageParams{
-			ChatID: telegoutil.ID(userID),
-			Text:   "This type of media is not supported. Supported: reels, posts.",
-		}); err != nil {
-			log.Printf("failed to send unsupported message")
-		}
-
-		return
+		return handler.ErrUnsupported
 	}
 
-	h.handlers[postType].Handle(userID, msg, msgID)
+	return h.handlers[postType].Handle(userID, msg, msgID)
 }
