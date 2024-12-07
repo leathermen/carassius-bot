@@ -31,6 +31,7 @@ func NewConsumer(bot *telego.Bot, queue queue.Queue, handler handler.Handler) *C
 
 func (c *Consumer) Start(ctx context.Context) {
 	limiter := rate.NewLimiter(rate.Every(time.Second*5), 1)
+	botname := bothelper.Botname(c.bot)
 	for {
 		select {
 		case <-ctx.Done():
@@ -38,7 +39,6 @@ func (c *Consumer) Start(ctx context.Context) {
 			return
 		default:
 			_ = limiter.Wait(ctx)
-			botname := bothelper.Botname(c.bot)
 			msg, err := c.queue.GetMessageFromQueueByBot(botname)
 
 			if err != nil {
