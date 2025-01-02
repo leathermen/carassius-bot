@@ -14,6 +14,7 @@ import (
 	"github.com/nikitades/carassius-bot/consumer/internal/db"
 	"github.com/nikitades/carassius-bot/consumer/internal/handlers"
 	"github.com/nikitades/carassius-bot/consumer/pkg"
+	"github.com/nikitades/carassius-bot/consumer/pkg/handler"
 
 	_ "github.com/lib/pq"
 )
@@ -61,7 +62,15 @@ func main() {
 		channels = append(channels, channel)
 	}
 
-	consumer := pkg.NewConsumer(bot, db, handlers.NewSuper(bot, db, db, channels))
+	proxyParams := &handler.Proxy{
+		Username:   os.Getenv("PROXY_USERNAME"),
+		CountryISO: os.Getenv("PROXY_COUNTRY"),
+		Password:   os.Getenv("PROXY_PASSWORD"),
+		Hostname:   os.Getenv("PROXY_HOSTNAME"),
+		Port:       os.Getenv("PROXY_PORT"),
+	}
+
+	consumer := pkg.NewConsumer(bot, db, handlers.NewSuper(bot, db, db, proxyParams, channels))
 
 	var signalChan chan (os.Signal) = make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)

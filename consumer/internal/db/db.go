@@ -21,7 +21,7 @@ func (d *Database) GetMessageFromQueueByBot(botName string) (*queue.Message, err
 
 	rows, err := d.db.Query(query, botName) //nolint:rowserrcheck
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get message from queue by bot: %w", err)
 	}
 	defer rows.Close()
 
@@ -29,7 +29,7 @@ func (d *Database) GetMessageFromQueueByBot(botName string) (*queue.Message, err
 		var message queue.Message
 		err := rows.Scan(&message.ID, &message.UserID, &message.Message, &message.BotName, &message.SocialNetworkName, &message.Timestamp)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to next row at get message from queue by bot: %w", err)
 		}
 		return &message, nil
 	}
@@ -40,7 +40,11 @@ func (d *Database) GetMessageFromQueueByBot(botName string) (*queue.Message, err
 func (d *Database) DeleteMessageFromQueue(messageID int) error {
 	query := "DELETE FROM message_queue WHERE id = $1"
 	_, err := d.db.Exec(query, messageID)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to delete a message from the queue: %w", err)
+	}
+
+	return nil
 }
 
 func (d *Database) GetMediaFileBySocialNetworkID(mediaID, platformName, botName string) (*queue.MediaFile, error) {
@@ -52,7 +56,7 @@ func (d *Database) GetMediaFileBySocialNetworkID(mediaID, platformName, botName 
 	if err == sql.ErrNoRows {
 		return nil, nil //nolint:nilnil
 	} else if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to scan at get media file by social network ID: %w", err)
 	}
 
 	return &mediaFile, nil
@@ -68,7 +72,7 @@ func (d *Database) InsertMediaFile(mediaFile queue.MediaFile) error {
 	err := d.db.QueryRow(query, mediaFile.SocialNetworkID, mediaFile.SocialNetworkName, mediaFile.FileID, mediaFile.FileType, mediaFile.Bot).Scan(&mediaFile.ID) //nolint:execinquery
 	if err != nil {
 		log.Println("Error inserting media file:", err)
-		return err
+		return fmt.Errorf("failed to query row at insert media file: %w", err)
 	}
 
 	fmt.Printf("Inserted media file with ID %d\n", mediaFile.ID)

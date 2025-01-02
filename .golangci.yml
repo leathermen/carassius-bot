@@ -7,7 +7,6 @@ linters:
     - depguard
     - nakedret
     - exhaustive
-    - wrapcheck # do not require to wrap each error in extra layer as it puts additional pressure on the garbage collector
     - errorlint # not needed since nested errors are not being used
     - goerr113
     - nolintlint # do not lint comments targeting a linter line //nolint:errcheck

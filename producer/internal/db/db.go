@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"regexp"
 
@@ -23,7 +24,7 @@ func (d *Database) UserExistsInDB(userID int64) (bool, error) {
 
 	err := d.db.QueryRow(query, userID).Scan(&exists)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to query row at user exists in db: %w", err)
 	}
 
 	return exists, nil
@@ -40,7 +41,7 @@ func (d *Database) AddUserToDB(user telego.User, bot string) error {
 	_, err := d.db.Exec(query, user.ID, user.IsBot, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.CanJoinGroups, user.CanReadAllGroupMessages, user.SupportsInlineQueries, bot)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add user to db: %w", err)
 	}
 
 	return nil
@@ -65,7 +66,11 @@ func (d *Database) UpdateUserInDB(user telego.User, bot string) error {
 
 	_, err := d.db.Exec(query, user.ID, user.IsBot, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.CanJoinGroups, user.CanReadAllGroupMessages, user.SupportsInlineQueries, bot)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to update user in db: %w", err)
+	}
+
+	return nil
 }
 
 func (d *Database) AddUserMessageToDB(userID int64, firstName, lastName, username, languageCode, message string) error {
@@ -79,7 +84,7 @@ func (d *Database) AddUserMessageToDB(userID int64, firstName, lastName, usernam
 	_, err := d.db.Exec(query, userID, firstName, lastName, username, languageCode, message)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add user message to db: %w", err)
 	}
 
 	return nil
@@ -100,7 +105,7 @@ func (d *Database) AddMessageToQueue(userID int64, message, bot, socialNetworkNa
 			var count int
 			err := d.db.QueryRow("SELECT COUNT(*) FROM message_queue WHERE user_id = $1 AND message = $2", userID, link).Scan(&count)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to query row at add user message to queue: %w", err)
 			}
 
 			// Если ссылки нет в базе для данного пользователя, добавляем ее
@@ -110,7 +115,7 @@ func (d *Database) AddMessageToQueue(userID int64, message, bot, socialNetworkNa
 					userID, link, bot, socialNetworkName,
 				)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to exec at add user message to queue: %w", err)
 				}
 			}
 		}
@@ -130,7 +135,7 @@ func (d *Database) GetMessagesCountByBot(botName string) (int, error) {
 	).Scan(&count)
 
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to query row at get message count by bot: %w", err)
 	}
 
 	return count, nil

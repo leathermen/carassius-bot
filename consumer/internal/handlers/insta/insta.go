@@ -1,6 +1,7 @@
 package insta
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/mymmrac/telego"
@@ -50,5 +51,11 @@ func (h *Handler) Handle(userID int64, msg string, msgID int) error {
 		return handler.ErrUnsupported
 	}
 
-	return h.handlers[postType].Handle(userID, msg, msgID)
+	err := h.handlers[postType].Handle(userID, msg, msgID)
+
+	if err != nil {
+		return fmt.Errorf("failed to handle %s", postType.String())
+	}
+
+	return nil
 }

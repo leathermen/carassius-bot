@@ -5,6 +5,8 @@ WORKDIR /app
 COPY go.mod go.sum /app/
 RUN go mod download
 
+RUN apk add ffmpeg
+
 FROM golang:1.23-alpine AS build
 
 WORKDIR /app
