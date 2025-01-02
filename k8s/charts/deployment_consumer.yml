@@ -42,3 +42,28 @@ spec:
                 secretKeyRef:
                   name: consumer-secret
                   key: database-url
+            - name: PROXY_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-secret
+                  key: proxy-username
+            - name: PROXY_COUNTRY
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-secret
+                  key: proxy-country
+            - name: PROXY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-secret
+                  key: proxy-password
+            - name: PROXY_HOSTNAME
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-secret
+                  key: proxy-hostname
+            - name: PROXY_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: consumer-secret
+                  key: proxy-port
