@@ -141,4 +141,9 @@ jobs:
             yq -i '.stringData.password = "${{ secrets.DATABASE_PWD }}"' 'k8s/charts/secret_postgres.yml'
             yq -i '.stringData.name = "${{ secrets.DATABASE_NAME }}"' 'k8s/charts/secret_postgres.yml'
             yq -i '.data[.dockerconfigjson] = "${{ secrets.DOCKERHUB_AUTH_CONFIG_B64 }}"' 'k8s/charts/secret_dockerhub.yml'
+            yq -i '.stringData.proxy-username = "${{ secrets.PROXY_USERNAME }}"' 'k8s/charts/secret_consumer.yml'
+            yq -i '.stringData.proxy-country = "${{ secrets.PROXY_COUNTRY }}"' 'k8s/charts/secret_consumer.yml'
+            yq -i '.stringData.proxy-password = "${{ secrets.PROXY_PASSWORD }}"' 'k8s/charts/secret_consumer.yml'
+            yq -i '.stringData.proxy-hostname = "${{ secrets.PROXY_HOSTNAME }}"' 'k8s/charts/secret_consumer.yml'
+            yq -i '.stringData.proxy-port = "${{ secrets.PROXY_PORT }}"' 'k8s/charts/secret_consumer.yml'
       - run: kubectl --kubeconfig=/home/runner/.kube/config apply -f k8s/charts --recursive -n carassius
