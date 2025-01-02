@@ -5,8 +5,6 @@ WORKDIR /app
 COPY go.mod go.sum /app/
 RUN go mod download
 
-RUN apk add ffmpeg
-
 FROM golang:1.23-alpine AS build
 
 WORKDIR /app
@@ -18,7 +16,11 @@ COPY ./shared/ /app/shared/
 COPY go.mod go.sum /app/
 RUN go build -o /bin/consumer /app/consumer/cmd
 
-FROM alpine:latest
+FROM alpine:latest as runner
+
+RUN apk add ffmpeg
+
+FROM runner
 
 WORKDIR /app
 COPY --from=build /bin/consumer /app/consumer
