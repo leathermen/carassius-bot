@@ -189,16 +189,11 @@ func (h *Handler) findSeparateFormats(video *youtube.Video) (videoFormat, audioF
 func (h *Handler) findSingleFormat(video *youtube.Video) (youtube.Format, bool) {
 	var optimalVideoFormat youtube.Format
 
-	withAudio := []youtube.Format{}
-
 	for _, v := range video.Formats {
 		isMP4 := strings.Contains(v.MimeType, "video/mp4")
 		isLessThanLimit := v.ContentLength <= maxJointFileSize
 		isMoreThanTheLastOne := v.ContentLength > optimalVideoFormat.ContentLength
 		hasAudioTrack := v.AudioQuality != ""
-		if hasAudioTrack {
-			withAudio = append(withAudio, v)
-		}
 		if isMP4 && isLessThanLimit && isMoreThanTheLastOne && hasAudioTrack {
 			optimalVideoFormat = v
 		}
